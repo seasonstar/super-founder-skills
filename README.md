@@ -17,7 +17,7 @@ Claude Code 技能集合 - 内容创作与项目管理自动化工具。
 
 ```bash
 # Clone to Claude Code skills directory
-git clone https://github.com/fuzhengwei/super-founder-skills.git
+git clone https://github.com/seasonstar/super-founder-skills.git
 cp -r super-founder-skills/skills/* ~/.claude/skills/
 ```
 
