@@ -8,7 +8,7 @@
 | 字段 | 必填 | 示例 |
 |------|------|------|
 | 任务标题 | ✅ | "修复登录bug" |
-| 负责人 | ✅ | 林小鹏 |
+| 负责人 | ✅ | 姓名 |
 | 优先级 | ❌ | 高/中/低（默认：中） |
 | 迭代 | ❌ | Sprint 17（默认：当前迭代） |
 | 描述 | ❌ | 详细说明 |
@@ -16,12 +16,16 @@
 
 ---
 
-### Step 2: 获取配置
+### Step 2: 读取本地配置
 
-从 [../yunxiao-weekly-report/CONFIG.md](../yunxiao-weekly-report/CONFIG.md) 读取：
-- Organization ID
-- 项目名称
-- 用户ID映射
+```
+Read file: ~/.yunxiao/config.json
+```
+
+从中获取：
+- `organizationId` — 组织 ID
+- `projectName` — 项目名称
+- `members` — 姓名→用户ID 映射表
 
 ---
 
@@ -32,23 +36,23 @@ mcp__alibabacloud-devops__search_projects
 ```
 
 参数：
-- organizationId: 从 CONFIG.md 获取
+- organizationId: 从 config.json 获取
 
-从返回列表中匹配项目名称获取项目 ID。
+从返回列表中精确匹配项目名称获取项目 ID。
 
 ---
 
 ### Step 4: 验证/获取用户ID
 
-**方式1**: 使用 CONFIG.md 中的映射表（优先）
+**优先使用映射表**（从 config.json 的 `members` 字段读取姓名→用户ID）。
 
-**方式2**: 动态查询
+**动态查询**（映射表中没有时）:
 ```
 mcp__alibabacloud-devops__search_organization_members
 ```
 
 参数：
-- organizationId: 从 CONFIG.md 获取
+- organizationId: 从 config.json 获取
 - query: [用户名]
 
 ---
@@ -60,7 +64,7 @@ mcp__alibabacloud-devops__list_sprints
 ```
 
 参数：
-- organizationId: 从 CONFIG.md 获取
+- organizationId: 从 config.json 获取
 - id: [项目ID]
 
 **迭代选择逻辑**:
@@ -87,7 +91,7 @@ mcp__yunxiao__get_work_item_types
 ```
 
 参数：
-- organizationId: 从 CONFIG.md 获取
+- organizationId: 从 config.json 获取
 - projectId: [项目ID]
 - category: "Task"
 
@@ -119,11 +123,11 @@ mcp__yunxiao__create_work_item
 
 ### Step 8: 推送企微通知
 
-创建成功后，推送通知到IT群：
+创建成功后，从 config.json 读取 `wecomWebhook`，推送通知：
 
 ```bash
 curl -X POST \
-  'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=23a1f0ba-bcad-4b25-bd06-e39b43569eec' \
+  '[wecomWebhook URL]' \
   -H 'Content-Type: application/json' \
   -d '{
     "msgtype": "markdown",
@@ -160,7 +164,8 @@ https://devops.aliyun.com/projex/workspace/[spaceId]/workitem/[itemId]
 
 | 场景 | 处理方式 |
 |------|---------|
+| config.json 不存在 | 提示用户创建 `~/.yunxiao/config.json` |
 | 找不到项目 | 报错并停止 |
-| 用户名无效 | 列出有效人员名单 |
+| 用户名无效 | 列出 config.json 中配置的成员名单 |
 | 迭代不存在 | 列出可用迭代 |
 | 创建失败 | 显示错误详情，提供重试建议 |

@@ -24,6 +24,7 @@ interface Config {
   model?: string;
   size?: 'default' | '2k';
   aspectRatio?: string;
+  apiKey?: string;
 }
 
 interface QwenResponse {
@@ -202,7 +203,11 @@ Style Configuration (persistent settings):
   --no-config               Ignore config files, use only command-line arguments
 
 Environment Variables:
-  DASHSCOPE_API_KEY         Qwen API key (required)
+  DASHSCOPE_API_KEY         Qwen API key (or set in config.json)
+
+Config (fallback when env var not set):
+  ~/.smart-illustrator/config.json   User-level: {"apiKey": "sk-xxx"}
+  .smart-illustrator/config.json     Project-level: {"apiKey": "sk-xxx"}
 
 Examples:
   # Using Qwen API
@@ -270,12 +275,33 @@ async function main() {
     }
   }
 
-  // Get API key
-  const apiKey = process.env.DASHSCOPE_API_KEY;
+  // Get API key: env var > user config > project config
+  let apiKey = process.env.DASHSCOPE_API_KEY;
 
   if (!apiKey) {
-    console.error('Error: DASHSCOPE_API_KEY environment variable is required');
-    console.error('Please set it: export DASHSCOPE_API_KEY="your-api-key"');
+    // Try loading from config files
+    const configPaths = [
+      resolve(homedir(), '.smart-illustrator', 'config.json'),
+      resolve(process.cwd(), '.smart-illustrator', 'config.json'),
+    ];
+    for (const configPath of configPaths) {
+      try {
+        const raw = await readFile(configPath, 'utf-8');
+        const cfg: Config = JSON.parse(raw);
+        if (cfg.apiKey) {
+          apiKey = cfg.apiKey;
+          break;
+        }
+      } catch {
+        // Config file not found or invalid, skip
+      }
+    }
+  }
+
+  if (!apiKey) {
+    console.error('Error: DASHSCOPE_API_KEY not found');
+    console.error('Set env var: export DASHSCOPE_API_KEY="your-api-key"');
+    console.error('Or add to config: ~/.smart-illustrator/config.json → {"apiKey": "your-key"}');
     process.exit(1);
   }
 

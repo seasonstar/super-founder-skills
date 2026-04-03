@@ -82,12 +82,21 @@ cp config/config_example.json config/csdn_config.json
 cd ~/.claude/skills/smart-illustrator
 bun install
 
-# 2. 设置阿里云 DashScope API Key（用于通义万相图片生成）
+# 2. 配置阿里云 DashScope API Key（两种方式二选一）
+# 方式A：环境变量
 export DASHSCOPE_API_KEY="你的API Key"
 
-# 3. 可选：配置风格参考图
-# 项目级: .smart-illustrator/config.json
-# 用户级: ~/.smart-illustrator/config.json
+# 方式B：写入配置文件（推荐，避免每次设置环境变量）
+mkdir -p ~/.smart-illustrator
+cat > ~/.smart-illustrator/config.json << 'EOF'
+{
+  "apiKey": "你的DashScope API Key",
+  "references": ["./refs/style-ref-01.png"]
+}
+EOF
+
+# 3. 项目级配置（可选，用于风格参考图）
+# .smart-illustrator/config.json
 # 内容示例: { "references": ["./refs/style-ref-01.png"] }
 ```
 
@@ -109,36 +118,29 @@ node zsxq.js config add --url "https://wx.zsxq.com/group/你的GROUP_ID" --cooki
 
 ### yunxiao-task-assign & yunxiao-weekly-report
 
-云效任务分配 + 周报生成，两个技能共享同一套 MCP 配置，通过 Claude 原生 MCP 工具调用云效 API。
+云效任务分配 + 周报生成。通过 Claude 原生 MCP 工具调用云效 API，敏感配置统一存放在本地。
 
 ```bash
-# 1. 配置两个 MCP Server
-# 在 ~/.claude/mcp.json 中添加：
-# {
-#   "mcpServers": {
-#     "alibabacloud-devops": {
-#       "command": "npx",
-#       "args": ["-y", "alibabacloud-devops-mcp-server@latest"],
-#       "env": {
-#         "YUNXIAO_ACCESS_TOKEN": "你的云效Access Token"
-#       }
-#     },
-#     "yunxiao": {
-#       "command": "npx",
-#       "args": ["-y", "alibabacloud-devops-mcp-server@latest"],
-#       "env": {
-#         "YUNXIAO_ACCESS_TOKEN": "你的云效Access Token"
-#       }
-#     }
-#   }
-# }
+# 1. 配置 MCP Server
+# 在 ~/.claude/mcp.json 中添加 alibabacloud-devops server
+# 设置 YUNXIAO_ACCESS_TOKEN 环境变量
 
-# 2. 云效 Access Token 获取：
+# 2. 创建本地配置文件（敏感信息不入库）
+mkdir -p ~/.yunxiao
+cat > ~/.yunxiao/config.json << 'EOF'
+{
+  "organizationId": "你的云效组织ID",
+  "projectName": "项目名称",
+  "bufferDays": 7,
+  "wecomWebhook": "企微Webhook地址",
+  "members": {
+    "姓名": "用户ID"
+  }
+}
+EOF
+
+# 3. 云效 Access Token 获取：
 #    登录云效 > 个人设置 > Access Token > 创建 Token（勾选项目管理权限）
-
-# 3. 配置项目信息（两个技能共享）
-#    编辑 skills/yunxiao-weekly-report/CONFIG.md
-#    填入：Organization ID、项目名称、用户ID映射
 ```
 
 ## 更新技能

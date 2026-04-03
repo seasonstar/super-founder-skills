@@ -138,8 +138,10 @@ description: 智能配图与封面图生成器。支持三种模式：(1) 文章
 | 用户级 | `~/.smart-illustrator/config.json` |
 
 ```json
-{ "references": ["./refs/style-ref-01.png"] }
+{ "references": ["./refs/style-ref-01.png"], "apiKey": "sk-your-dashscope-key" }
 ```
+
+**`apiKey`**：可选，阿里云 DashScope API Key。设置后无需 `DASHSCOPE_API_KEY` 环境变量。建议放在用户级 `~/.smart-illustrator/config.json` 中，避免提交到 Git。
 
 ---
 
