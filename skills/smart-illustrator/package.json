@@ -1,0 +1,14 @@
+{
+  "name": "smart-illustrator",
+  "version": "1.0.0",
+  "description": "智能配图与 PPT 信息图生成器",
+  "type": "module",
+  "dependencies": {
+    "@types/lodash": "^4.14.0",
+    "lodash": "^4.17.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
+}
