@@ -20,12 +20,3 @@
 | ***REMOVED-NAME*** | `63ae357da5d2aaf80f0ddab9` |
 | ***REMOVED-NAME*** | `6891a3395c231c362c0ed181` |
 | ***REMOVED-NAME*** | `6915855722061217a25ea590` |
-
----
-
-## 配置文件路径
-
-| 文件 | 路径 |
-|------|------|
-| 云效配置 | `~/.openclaw/workspace/config/mcporter.json` |
-| 企微推送 | `~/.openclaw/workspace/wecom-config.json`（可选） |

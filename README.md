@@ -107,16 +107,23 @@ node zsxq.js config add --url "https://wx.zsxq.com/group/你的GROUP_ID" --cooki
 # Cookie 会过期，API 返回 1004/1059 错误时需重新配置
 ```
 
-### yunxiao-task-assign
+### yunxiao-task-assign & yunxiao-weekly-report
 
-云效"业财一体化"项目任务分配，通过 MCP Server 调用云效 API。
+云效任务分配 + 周报生成，两个技能共享同一套 MCP 配置，通过 Claude 原生 MCP 工具调用云效 API。
 
 ```bash
-# 1. 配置 alibabacloud-devops MCP Server
-# 在 Claude Code 的 MCP 配置中添加：
+# 1. 配置两个 MCP Server
+# 在 ~/.claude/mcp.json 中添加：
 # {
 #   "mcpServers": {
 #     "alibabacloud-devops": {
+#       "command": "npx",
+#       "args": ["-y", "alibabacloud-devops-mcp-server@latest"],
+#       "env": {
+#         "YUNXIAO_ACCESS_TOKEN": "你的云效Access Token"
+#       }
+#     },
+#     "yunxiao": {
 #       "command": "npx",
 #       "args": ["-y", "alibabacloud-devops-mcp-server@latest"],
 #       "env": {
@@ -128,24 +135,10 @@ node zsxq.js config add --url "https://wx.zsxq.com/group/你的GROUP_ID" --cooki
 
 # 2. 云效 Access Token 获取：
 #    登录云效 > 个人设置 > Access Token > 创建 Token（勾选项目管理权限）
-```
 
-### yunxiao-weekly-report
-
-云效迭代周报生成，自动从项目获取任务并生成格式化周报。
-
-```bash
-# 1. 复用 yunxiao-task-assign 的 MCP Server 配置
-
-# 2. 安装 mcporter CLI（用于调用云效 API）
-# 确保 mcporter 已安装并配置：
-#    ~/.openclaw/workspace/config/mcporter.json
-
-# 3. 可选：配置企业微信 Webhook 推送通知
-# 创建 ~/.openclaw/workspace/wecom-config.json：
-# {
-#   "weeklyReportWebhook": "你的企业微信Webhook地址"
-# }
+# 3. 配置项目信息（两个技能共享）
+#    编辑 skills/yunxiao-weekly-report/CONFIG.md
+#    填入：Organization ID、项目名称、用户ID映射
 ```
 
 ## 更新技能
