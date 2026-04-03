@@ -32,7 +32,7 @@ description: 云效任务分配。在云效"业财一体化"项目中创建任�
 | **必填项** | 任务标题 + 负责人 |
 | **可选项** | 优先级、迭代、描述、截止日期 |
 | **默认迭代** | 当前时段进行中的Sprint，无则取下一个 |
-| **支持人员** | ***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME*** |
+| **支持人员** | 从 `~/.yunxiao/config.json` 的 `members` 读取 |
 | **企微通知** | 创建后自动推送IT群 |
 
 ---
@@ -84,4 +84,4 @@ https://devops.aliyun.com/...
 |--------|-----|
 | 企微Webhook | `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=23a1f0ba-bcad-4b25-bd06-e39b43569eec` |
  |
-| 云效配置 | 复用 [../yunxiao-weekly-report/CONFIG.md](../yunxiao-weekly-report/CONFIG.md) |
+| 云效配置 | `~/.yunxiao/config.json`（组织ID、成员映射、Webhook） |

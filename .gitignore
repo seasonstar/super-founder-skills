@@ -25,6 +25,9 @@ Thumbs.db
 # OMC internal
 .omc/
 
+# Local dev files
+scripts/CLAUDE.md
+
 # Logs
 *.log
 

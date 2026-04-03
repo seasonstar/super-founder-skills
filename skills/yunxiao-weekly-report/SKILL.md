@@ -9,13 +9,13 @@ description: 云效迭代周报生成。自动从云效"业财一体化"项目�
 
 ```
 # 单人周报
-***REMOVED-NAME***周报
+XX周报
 
 # 批量周报
 全体人员周报 / 团队周报
 
 # 指定迭代
-Sprint 15的周报（***REMOVED-NAME***）
+Sprint 15的周报（XX）
 Sprint 16 周报（全体人员）
 ```
 
@@ -27,7 +27,7 @@ Sprint 16 周报（全体人员）
 |------|------|
 | **项目** | 固定为"业财一体化" |
 | **默认迭代** | 刚刚过去的迭代（当前时间 < 迭代结束 + 7天） |
-| **支持人员** | ***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME***、***REMOVED-NAME*** |
+| **支持人员** | 从 `~/.yunxiao/config.json` 的 `members` 读取 |
 
 ---
 
