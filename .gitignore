@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.pnpm-store/
+
+# Environment & secrets
+.env
+.env.local
+config.local.*
+
+# Real configs with secrets (users create from examples)
+skills/csdn-article-publish/config/csdn_config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OMC internal
+.omc/
+
+# Logs
+*.log
+
+# Build
+dist/
+build/
+out/
