@@ -9,14 +9,14 @@ description: 云效任务分配。在云效"业财一体化"项目中创建任�
 
 ```
 # 快速分配
-把"修复登录bug"分配给***REMOVED-NAME***
-创建任务"数据接口开发"并分配给***REMOVED-NAME***
+把"修复登录bug"分配给张三
+创建任务"数据接口开发"并分配给李四
 
 # 带详情分配
-给***REMOVED-NAME***分配任务：优化ERP查询性能，优先级高，属于Sprint 17
+给王五分配任务：优化ERP查询性能，优先级高，属于Sprint 17
 
 # 批量分配
-创建以下任务并分配给***REMOVED-NAME***：
+创建以下任务并分配给赵六：
 1. 数据库索引优化
 2. 查询性能测试
 3. 监控告警配置
@@ -82,6 +82,5 @@ https://devops.aliyun.com/...
 
 | 配置项 | 值 |
 |--------|-----|
-| 企微Webhook | `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=23a1f0ba-bcad-4b25-bd06-e39b43569eec` |
- |
+| 企微Webhook | 从 `~/.yunxiao/config.json` 的 `wecomWebhook` 读取 |
 | 云效配置 | `~/.yunxiao/config.json`（组织ID、成员映射、Webhook） |
