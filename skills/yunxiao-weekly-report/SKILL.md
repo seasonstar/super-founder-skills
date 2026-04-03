@@ -53,18 +53,16 @@ Sprint 16 周报（全体人员）
 
 ---
 
-## ⚙️ 执行命令
+## 🔧 依赖的 MCP 工具
 
-```bash
-# 单人周报
-python3 ~/.openclaw/workspace/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-report.py 林小鹏
+按顺序调用以下 MCP 工具完成任务：
 
-# 指定迭代
-python3 ~/.openclaw/workspace/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-report.py 林小鹏 --sprint="Sprint 15"
-
-# 批量周报
-python3 ~/.openclaw/workspace/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-report.py --all
-```
+| 步骤 | MCP 工具 | 用途 |
+|------|---------|------|
+| 1 | `mcp__alibabacloud-devops__search_projects` | 获取项目 ID |
+| 2 | `mcp__alibabacloud-devops__list_sprints` | 获取迭代列表 |
+| 3 | `mcp__alibabacloud-devops__search_organization_members` | 获取用户 ID |
+| 4 | `mcp__yunxiao__search_workitems` | 查询工作项（Req + Task） |
 
 ---
 
@@ -77,7 +75,4 @@ python3 ~/.openclaw/workspace/skills/yunxiao-weekly-report/scripts/yunxiao-weekl
 
 ## 🔧 配置
 
-| 配置项 | 路径 |
-|--------|------|
-| 云效配置 | `~/.openclaw/workspace/config/mcporter.json` |
-| 执行脚本 | `~/.openclaw/workspace/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-report.py` |
+参考 [CONFIG.md](CONFIG.md) 获取组织 ID、项目名称和用户 ID 映射。

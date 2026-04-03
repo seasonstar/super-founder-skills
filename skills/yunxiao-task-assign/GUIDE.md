@@ -18,54 +18,49 @@
 
 ### Step 2: 获取配置
 
-读取配置文件获取：
-- Organization ID: `688c88cc9eda9d4e3ee46203`
-- 项目名称: "业财一体化"
+从 [../yunxiao-weekly-report/CONFIG.md](../yunxiao-weekly-report/CONFIG.md) 读取：
+- Organization ID
+- 项目名称
 - 用户ID映射
-
-配置路径: `../yunxiao-weekly-report/CONFIG.md`
 
 ---
 
 ### Step 3: 获取项目ID
 
-```bash
+```
 mcp__alibabacloud-devops__search_projects
 ```
 
 参数：
-- organizationId: `688c88cc9eda9d4e3ee46203`
+- organizationId: 从 CONFIG.md 获取
 
-从返回列表中匹配"业财一体化"获取项目ID。
+从返回列表中匹配项目名称获取项目 ID。
 
 ---
 
 ### Step 4: 验证/获取用户ID
 
-**方式1**: 使用配置映射
-```
-姓名 → 用户ID（从 CONFIG.md 读取）
-```
+**方式1**: 使用 CONFIG.md 中的映射表（优先）
 
 **方式2**: 动态查询
-```bash
+```
 mcp__alibabacloud-devops__search_organization_members
 ```
 
 参数：
-- organizationId: `688c88cc9eda9d4e3ee46203`
+- organizationId: 从 CONFIG.md 获取
 - query: [用户名]
 
 ---
 
 ### Step 5: 确定迭代ID
 
-```bash
+```
 mcp__alibabacloud-devops__list_sprints
 ```
 
 参数：
-- organizationId: `688c88cc9eda9d4e3ee46203`
+- organizationId: 从 CONFIG.md 获取
 - id: [项目ID]
 
 **迭代选择逻辑**:
@@ -87,12 +82,12 @@ if not current_sprint:
 
 ### Step 6: 获取工作项类型ID
 
-```bash
+```
 mcp__yunxiao__get_work_item_types
 ```
 
 参数：
-- organizationId: `688c88cc9eda9d4e3ee46203`
+- organizationId: 从 CONFIG.md 获取
 - projectId: [项目ID]
 - category: "Task"
 
@@ -102,7 +97,7 @@ mcp__yunxiao__get_work_item_types
 
 ### Step 7: 创建工作项
 
-```bash
+```
 mcp__yunxiao__create_work_item
 ```
 
@@ -152,7 +147,6 @@ curl -X POST \
 优先级：[高/中/低]
 迭代：[Sprint XX]
 状态：待处理
-ID：[工作项ID]
 
 🔗 云效链接
 https://devops.aliyun.com/projex/workspace/[spaceId]/workitem/[itemId]
@@ -170,13 +164,3 @@ https://devops.aliyun.com/projex/workspace/[spaceId]/workitem/[itemId]
 | 用户名无效 | 列出有效人员名单 |
 | 迭代不存在 | 列出可用迭代 |
 | 创建失败 | 显示错误详情，提供重试建议 |
-
----
-
-## ✅ 测试用例
-
-| 输入 | 期望结果 |
-|------|---------|
-| 把"修复bug"分配给林小鹏 | 创建任务，负责人林小鹏 |
-| 给李铭发创建高优先级任务"接口开发" | 创建任务，优先级高 |
-| Sprint 18任务"优化查询"分配给赖武法 | 创建任务，分配到Sprint 18 |
