@@ -227,7 +227,7 @@ async function main() {
   let promptFile: string | null = null;
   let output = 'generated.png';
   let model: string | null = null;
-  let size: 'default' | '2k' = '2k';  // Default to 2K resolution
+  let size: 'default' | '2k' = 'default';  // Default to ~1K resolution
   let aspectRatio: AspectRatio | undefined;
   let shouldSaveConfig = false;
   let saveConfigGlobal = false;
