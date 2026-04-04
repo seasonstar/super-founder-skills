@@ -240,6 +240,29 @@ function validateConfig(config, configFile) {
   return errors;
 }
 
+/**
+ * Strip YAML frontmatter (--- delimited block) from the beginning of content.
+ * Returns { content, frontmatter } where frontmatter is parsed key-value pairs.
+ */
+function stripFrontmatter(raw) {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!match) {
+    return { content: raw, frontmatter: {} };
+  }
+
+  const yamlBlock = match[1];
+  const frontmatter = {};
+
+  for (const line of yamlBlock.split('\n')) {
+    const kv = line.match(/^(\w[\w-]*)\s*:\s*(.+)$/);
+    if (kv) {
+      frontmatter[kv[1]] = kv[2].trim().replace(/^['"]|['"]$/g, '');
+    }
+  }
+
+  return { content: raw.slice(match[0].length), frontmatter };
+}
+
 function resolveContentAndTitle(args) {
   let content = args.content;
   let title = args.title ? String(args.title).trim() : '';
@@ -253,12 +276,37 @@ function resolveContentAndTitle(args) {
       printValidationErrors('Input validation failed', [`Markdown file '${resolvedFilePath}' not found，请检查 --file 路径是否正确`]);
     }
 
-    content = fs.readFileSync(resolvedFilePath, 'utf-8');
-    log.step(`File loaded, size: ${content.length} characters`);
+    const raw = fs.readFileSync(resolvedFilePath, 'utf-8');
+    log.step(`File loaded, size: ${raw.length} characters`);
+
+    const stripped = stripFrontmatter(raw);
+    content = stripped.content;
+    if (Object.keys(stripped.frontmatter).length > 0) {
+      log.step('Stripped YAML frontmatter from article');
+    }
 
     if (!title) {
-      title = path.basename(resolvedFilePath, path.extname(resolvedFilePath));
-      log.step(`Using filename as title: ${title}`);
+      // Prefer frontmatter title, then first # heading, then filename
+      if (stripped.frontmatter.title) {
+        title = stripped.frontmatter.title;
+        log.step(`Using frontmatter title: ${title}`);
+      } else {
+        const headingMatch = content.match(/^#\s+(.+)$/m);
+        if (headingMatch) {
+          title = headingMatch[1].trim();
+          log.step(`Using first heading as title: ${title}`);
+        } else {
+          title = path.basename(resolvedFilePath, path.extname(resolvedFilePath));
+          log.step(`Using filename as title: ${title}`);
+        }
+      }
+    }
+  } else if (content) {
+    // Also strip frontmatter from --content input
+    const stripped = stripFrontmatter(content);
+    content = stripped.content;
+    if (!title && stripped.frontmatter.title) {
+      title = stripped.frontmatter.title;
     }
   }
 
