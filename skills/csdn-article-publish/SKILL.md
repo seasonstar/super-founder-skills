@@ -27,13 +27,13 @@ description: csdn blog article publish skills,CSDN博客文章生成与发布技
 收到上述请求后：
 1. 读取用户提供的 Markdown 文件路径
 2. 解析文件内容，提取标题和标签（从"相关标签"字段中提取）
-3. **上传本地图片到 GitHub 图床，替换文章中的本地图片链接为 GitHub 直链**
+3. **上传本地图片到无铭图床(wmimg.com)，替换文章中的本地图片链接为 wmimg 直链**
 4. 验证所有图片链接已替换完成（无本地路径残留）
 5. 调用 `csdn_article.js` 执行保存/更新/发布
 
 ## ⚠️ 重要注意事项
 
-- **图片链接替换**：上传本地图片后**必须**替换 Markdown 中的链接为 GitHub 直链，再保存/发布。未替换的本地路径在 CSDN 上无法显示。
+- **图片链接替换**：上传本地图片后**必须**替换 Markdown 中的链接为 wmimg 直链，再保存/发布。未替换的本地路径在 CSDN 上无法显示。
 - **防限流**：CSDN 有接口限流机制，请勿频繁调用 API
 - **建议操作**：
   - 单次保存/更新操作间隔至少 5-10 秒
@@ -89,33 +89,36 @@ def parse_article(filepath):
 
 ### 步骤 3：上传本地图片并替换链接
 
-**⚠️ 关键步骤：上传后必须替换 Markdown 中的本地图片链接为 GitHub 直链，再进行发布。**
+**⚠️ 关键步骤：上传所有图片（本地和外链）到 wmimg 图床，替换链接后再发布。**
 
-**仅本地图片需要上传**，外链图片保持原样。
+**所有图片都需要重新上传**：本地图片直接上传，外链图片下载后转存到 wmimg。
 
-#### 3.1 逐张上传本地图片
+#### 3.1 逐张上传图片
 
-识别文章中所有 `![alt](本地路径)` 格式的图片，逐张上传：
+识别文章中所有 `![alt](路径)` 格式的图片，逐张上传：
 
 ```bash
 # 上传单张图片（Token 从 csdn_config.json 自动读取）
-venv/bin/python ~/.claude/skills/csdn-article-publish/scripts/github_image_uploader.py <图片绝对路径> <GITHUB_TOKEN>
+python3 ~/.claude/skills/csdn-article-publish/scripts/wmimg_uploader.py <图片绝对路径>
 ```
 
 **注意**：图片路径必须相对于文章所在目录解析。例如文章在 `articles/` 目录下，图片 `xxx.png` 的绝对路径为 `articles/xxx.png`。
 
-每张图片上传成功后，记录返回的 `raw_url`（格式：`https://raw.githubusercontent.com/seasonstar/picx-images-hosting/master/images/xxx.png`）。
+每张图片上传成功后，记录返回的 `url`（格式：`https://wmimg.com/xxx/xxx.png`）。
 
 #### 3.2 替换文章中的本地图片链接
 
-**必须完成这一步才能发布！** 将文章中每张本地图片的路径替换为上传后返回的 GitHub 直链：
+**必须完成这一步才能发布！** 将文章中每张图片的路径替换为上传后返回的 wmimg 直链：
 
 ```
 替换前: ![说明](本地图片名.png)
-替换后: ![说明](https://raw.githubusercontent.com/seasonstar/picx-images-hosting/master/images/图片名.png)
+替换后: ![说明](https://wmimg.com/xxx/图片名.png)
+
+替换前: ![说明](https://other-site.com/xxx/图片名.png)
+替换后: ![说明](https://wmimg.com/xxx/图片名.png)
 ```
 
-使用 Edit 工具逐张替换，确保所有 `![alt](非http开头)` 的图片链接都已替换为 GitHub URL。
+使用 Edit 工具逐张替换，确保所有 `![alt](非http开头)` 的图片链接都已替换为 wmimg URL。
 
 #### 3.3 验证替换结果
 
@@ -129,16 +132,14 @@ grep pattern: !\[.*\]\((?!https?://)
 
 **单独上传一张图片**：
 ```bash
-# 基本用法
-venv/bin/python ~/.claude/skills/csdn-article-publish/scripts/github_image_uploader.py <图片路径> <GITHUB_TOKEN>
+# 基本用法（Token 从 csdn_config.json 自动读取）
+python3 ~/.claude/skills/csdn-article-publish/scripts/wmimg_uploader.py <图片路径>
 
-# 使用代理（上传不稳定时）
-venv/bin/python ~/.claude/skills/csdn-article-publish/scripts/github_image_uploader.py <图片路径> <GITHUB_TOKEN> --proxy http://127.0.0.1:15236
+# 指定 Token
+python3 ~/.claude/skills/csdn-article-publish/scripts/wmimg_uploader.py <图片路径> <WMIMG_TOKEN>
 ```
 
-**GitHub Token 获取**：从 `csdn_config.json` 的 `github.token` 字段读取，或使用环境变量 `$GITHUB_TOKEN`。
-
-**代理配置**：当 GitHub API 上传不稳定时，通过 `--proxy` 指定本地代理。脚本也支持自动读取系统代理（macOS 系统偏好设置中的 HTTP/HTTPS 代理）和 `HTTPS_PROXY` 环境变量。
+**wmimg Token 获取**：从 `csdn_config.json` 的 `wmimg.token` 字段读取，或使用环境变量 `$WMIMG_TOKEN`。
 
 ### 步骤 4：保存草稿
 
@@ -202,11 +203,12 @@ csdn-article-publish/
 │   ├── csdn_article.js              # 核心执行脚本
 │   ├── markdown_to_html.js
 │   ├── marked.umd.js
-│   ├── github_image_uploader.py     # GitHub 图床上传工具
+│   ├── github_image_uploader.py     # GitHub 图床上传工具（已弃用）
+│   ├── wmimg_uploader.py            # 无铭图床上传工具（国内稳定）
 │   └── markdown_image_uploader.py   # Markdown 图片处理器（自动上传本地图片）
 ├── config/
 │   ├── config_example.json           # 配置文件示例
-│   ├── csdn_config.json              # 用户实际配置（含 GitHub Token）
+│   ├── csdn_config.json              # 用户实际配置（含 wmimg Token）
 │   └── user_agents.json
 └── references/
     ├── api_reference.md

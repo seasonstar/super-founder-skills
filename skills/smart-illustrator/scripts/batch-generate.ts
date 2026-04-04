@@ -136,26 +136,44 @@ function buildPromptFromLegacy(
   return prompt;
 }
 
+// Dimension maps for Qwen image generation
+const ratioMap2K: Record<string, string> = {
+  '1:1': '2048*2048',
+  '2:3': '1365*2048',
+  '3:2': '2048*1365',
+  '3:4': '1536*2048',
+  '4:3': '2048*1536',
+  '4:5': '1638*2048',
+  '5:4': '2048*1638',
+  '9:16': '1152*2048',
+  '16:9': '2688*1536',
+  '21:9': '2688*1152',
+  '2.35:1': '2688*1144'
+};
+
+const ratioMapDefault: Record<string, string> = {
+  '1:1': '1024*1024',
+  '2:3': '682*1024',
+  '3:2': '1024*682',
+  '3:4': '768*1024',
+  '4:3': '1024*768',
+  '4:5': '819*1024',
+  '5:4': '1024*819',
+  '9:16': '576*1024',
+  '16:9': '1344*768',
+  '21:9': '1344*576',
+  '2.35:1': '1344*572'
+};
+
 async function generateImage(
   prompt: string,
   model: string,
   apiKey: string,
-  aspectRatio: string = '16:9'
+  aspectRatio: string = '16:9',
+  size: 'default' | '2k' = 'default'
 ): Promise<Buffer | null> {
-  // Map aspect ratio to Qwen dimensions (2K resolution)
-  const ratioMap: Record<string, string> = {
-    '1:1': '2048*2048',
-    '2:3': '1365*2048',
-    '3:2': '2048*1365',
-    '3:4': '1536*2048',
-    '4:3': '2048*1536',
-    '4:5': '1638*2048',
-    '5:4': '2048*1638',
-    '9:16': '1152*2048',
-    '16:9': '2688*1536',
-    '21:9': '2688*1152'
-  };
-  const dimensions = ratioMap[aspectRatio] || '2688*1536';
+  const ratioMap = size === '2k' ? ratioMap2K : ratioMapDefault;
+  const dimensions = ratioMap[aspectRatio] || ratioMap['16:9'];
 
   const requestBody = {
     model: model,
@@ -228,6 +246,7 @@ Options:
   -c, --config <path>       JSON config file (unified format, same as web version)
   -o, --output-dir <path>   Output directory (default: ./illustrations)
   -m, --model <model>       Model to use (default: qwen-image-2.0-pro)
+  -s, --size <size>         Image size: 2k (2048px) or default (~1K, default)
   -d, --delay <ms>          Delay between requests in ms (default: 2000)
   -p, --prefix <text>       Filename prefix (default: from config filename)
   -r, --regenerate <ids>    Regenerate specific images (e.g., "3" or "3,5,7")
@@ -271,6 +290,7 @@ async function main() {
   let configPath: string | null = null;
   let outputDir = './illustrations';
   let model = DEFAULT_MODEL;
+  let size: 'default' | '2k' = 'default';
   let delay = 2000;
   let prefix: string | null = null;
   let forceRegenerate = false;
@@ -294,6 +314,10 @@ async function main() {
       case '-m':
       case '--model':
         model = args[++i];
+        break;
+      case '-s':
+      case '--size':
+        size = args[++i] as 'default' | '2k';
         break;
       case '-d':
       case '--delay':
@@ -349,6 +373,7 @@ async function main() {
     console.log(`\nBatch Image Generation (Unified Format)`);
     console.log(`=======================================`);
     console.log(`Model: ${model}`);
+    console.log(`Size: ${size}`);
     console.log(`Total: ${total} images`);
     console.log(`Prefix: ${prefix}`);
     console.log(`Output: ${outputDir}`);
@@ -393,7 +418,7 @@ async function main() {
 
       try {
         const prompt = buildPromptFromUnified(picture, config.style);
-        const imageBuffer = await generateImage(prompt, model, apiKey);
+        const imageBuffer = await generateImage(prompt, model, apiKey, config.batch_rules?.aspect_ratio || '16:9', size);
 
         if (imageBuffer) {
           await mkdir(dirname(outputPath), { recursive: true });
@@ -438,6 +463,7 @@ async function main() {
     console.log(`\nBatch Image Generation (Legacy Format)`);
     console.log(`======================================`);
     console.log(`Model: ${model}`);
+    console.log(`Size: ${size}`);
     console.log(`Total: ${total} images`);
     console.log(`Output: ${outputDir}`);
     if (forceRegenerate) {
@@ -477,7 +503,7 @@ async function main() {
 
       try {
         const prompt = buildPromptFromLegacy(illustration, legacyConfig.style);
-        const imageBuffer = await generateImage(prompt, model, apiKey);
+        const imageBuffer = await generateImage(prompt, model, apiKey, '16:9', size);
 
         if (imageBuffer) {
           await mkdir(dirname(outputPath), { recursive: true });
