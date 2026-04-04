@@ -241,6 +241,34 @@ function validateConfig(config, configFile) {
 }
 
 /**
+ * Extract and strip "相关标签" line from the bottom of content.
+ * Supports formats like:
+ *   相关标签：#tag1 #tag2 #tag3
+ *   **相关标签**：#tag1 #tag2
+ * Returns { content, tags } where tags is a comma-separated string.
+ */
+function extractTags(content) {
+  const match = content.match(/\n\*{0,2}相关标签\*{0,2}[：:]\s*(.+?)[\r\n]*$/);
+  if (!match) {
+    return { content, tags: '' };
+  }
+
+  const tagLine = match[1];
+  const tags = tagLine.match(/#([^#\s,，]+)/g);
+  if (!tags || tags.length === 0) {
+    return { content, tags: '' };
+  }
+
+  // Remove # prefix and join with comma, limit to 5
+  const tagStr = tags.map(t => t.slice(1)).slice(0, MAX_TAG_COUNT).join(',');
+
+  // Strip the entire line from content
+  const cleaned = content.slice(0, match.index).replace(/[\r\n]+$/, '');
+
+  return { content: cleaned, tags: tagStr };
+}
+
+/**
  * Strip YAML frontmatter (--- delimited block) from the beginning of content.
  * Returns { content, frontmatter } where frontmatter is parsed key-value pairs.
  */
@@ -267,6 +295,7 @@ function resolveContentAndTitle(args) {
   let content = args.content;
   let title = args.title ? String(args.title).trim() : '';
   let resolvedFilePath = null;
+  let tags = '';
 
   if (args.file) {
     resolvedFilePath = path.resolve(args.file);
@@ -279,10 +308,19 @@ function resolveContentAndTitle(args) {
     const raw = fs.readFileSync(resolvedFilePath, 'utf-8');
     log.step(`File loaded, size: ${raw.length} characters`);
 
+    // Strip YAML frontmatter
     const stripped = stripFrontmatter(raw);
     content = stripped.content;
     if (Object.keys(stripped.frontmatter).length > 0) {
       log.step('Stripped YAML frontmatter from article');
+    }
+
+    // Extract tags from "相关标签" line
+    const tagged = extractTags(content);
+    content = tagged.content;
+    tags = tagged.tags;
+    if (tags) {
+      log.step(`Auto-detected tags: ${tags}`);
     }
 
     if (!title) {
@@ -308,11 +346,17 @@ function resolveContentAndTitle(args) {
     if (!title && stripped.frontmatter.title) {
       title = stripped.frontmatter.title;
     }
+
+    // Extract tags
+    const tagged = extractTags(content);
+    content = tagged.content;
+    tags = tagged.tags;
   }
 
   return {
     content,
     title,
+    tags,
     resolvedFilePath
   };
 }
@@ -444,7 +488,7 @@ function buildPayload(args, config) {
     Description: extra.description || defaults.description || '',
     readType: extra.readType || defaults.readType || 'public',
     level: 0,
-    tags: extra.tags || defaults.tags || '',
+    tags: extra.tags || args.autoTags || defaults.tags || '',
     status: isPublish ? 0 : 2,
     categories: extra.categories || defaults.categories || '',
     type: extra.type || defaults.type || 'original',
@@ -602,6 +646,7 @@ async function main() {
     id: options.id,
     title: resolvedInput.title,
     content: resolvedInput.content,
+    autoTags: resolvedInput.tags,
     extra
   };
   
