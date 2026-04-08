@@ -91,12 +91,30 @@
 - `lineHeight: 1.25`
 - **禁止 Emoji**
 
-### 文字居中估算
+### 文字居中估算（极其重要）
 
-独立 text 元素的 `x` 是左边缘，需手动计算：
-- 英文：`estimatedWidth = text.length * fontSize * 0.5`
-- 中文：`estimatedWidth = text.length * fontSize * 1.0`
-- 居中：`x = centerX - estimatedWidth / 2`
+独立 text 元素的 `x` 是左边缘，必须手动计算居中位置。
+
+**核心公式**：`x = contentCenterX - estimatedWidth / 2`
+
+其中 `contentCenterX` = 内容区域最左元素x 与最右元素(x+width) 的中点，**不是画布中点**。
+
+**宽度估算**（逐字符计算，区分中英文）：
+- 中文字符（CJK）：`charWidth = fontSize * 1.0`
+- 英文/数字/标点：`charWidth = fontSize * 0.5`
+- `estimatedWidth = sum(每个字符的 charWidth)`
+
+**示例**：fontSize=28，文本 "为什么是三条EMA，不是两条？"
+- 中文：为什么是三条不是两条 = 10字 × 28 = 280
+- 英文：EMA = 3字 × 14 = 42
+- 标点：，？= 2 × 14 = 28
+- 总宽 ≈ 350
+- 如果内容区域 center = 450：`x = 450 - 175 = 275`
+
+**常见错误**：
+- 混合中英文只用一种估算 → 标题偏移
+- 用画布中心而非内容区域中心 → 偏左或偏右
+- width 字段写太大 → 不影响渲染但误导自己
 
 ### 布局
 - 画布范围：0-1200 x 0-800

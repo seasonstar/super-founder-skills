@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "excalidraw-brute-export-cli": "0.4.0"
+    "excalidraw-brute-export-cli": "0.4.0",
+    "playwright": "^1.59.1"
   }
 }
