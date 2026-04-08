@@ -317,17 +317,9 @@ DASHSCOPE_API_KEY=$DASHSCOPE_API_KEY npx -y bun ~/.claude/skills/smart-illustrat
 ### Step 4: 创建带配图的文章
 
 保存为 `{文章名}-image.md`，包含：
-- YAML frontmatter 声明封面图和标题
 - 正文配图插入
 
-**YAML frontmatter 格式**：
-
-```yaml
----
-title: {文章标题}
-cover: ./{文章名}-cover.png
----
-```
+**禁止添加 YAML frontmatter**（`---` + `title:` + `cover:`）。文章直接从正文开始，不添加任何元数据头。
 
 ### Step 5: 输出确认
 
