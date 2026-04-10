@@ -86,7 +86,21 @@ All series share this skeleton:
 
 ---
 ### 往期文章回顾
-[Must copy REAL links from README_atmquant.md]
+
+**量化策略开发系列**
+- [量化策略开发01：我让AI全权做交易决策：从提示词设计到决策执行](https://mp.weixin.qq.com/s/yY95qcyoTXvzOFYjQcDpHw)
+- [量化策略开发02：海龟三重EMA趋势策略 - 从设计思路到回测验证](https://mp.weixin.qq.com/s/xB0_bTsrU7OzmwqdKAFfQw)
+- [量化策略开发03：均值回归信号捕捉 - EMA+RSI+ATR三维共振交易系统](https://mp.weixin.qq.com/s/Nl9Oqr7nsSWlnNGM9qJBGA)
+
+**以AI量化为生系列**
+- [以AI量化为生01：普通人如何从无到有稳步构建交易系统](https://mp.weixin.qq.com/s/vHL2ZNoqe65dGn9qEQzLgQ)
+- [以AI量化为生23：打造AI全驱动量化策略引擎](https://mp.weixin.qq.com/s/_QfvEdyZnJKhAWaMi98vUQ)
+- [以AI量化为生24：回测结果存储与策略参数管理](https://mp.weixin.qq.com/s/nIEAYOQutAUJKy8C5Dnj6w)
+
+**量化指标解码系列**
+- [量化指标解码01：让指标开口说话！K线图表给技术指标装上AI大脑](https://mp.weixin.qq.com/s/nvF7VT25RXgHzSnVRfBEcQ)
+- [量化指标解码19：K线形态识别 - 价格行为不会说谎](https://mp.weixin.qq.com/s/F2Pa-zLc7Axub9Zj__b-6A)
+- [量化指标解码20：谐波形态识别 - 用斐波那契找到精准反转点](https://mp.weixin.qq.com/s/4VzYURqpDeSVRh_1A8EGAw)
 
 ---
 **相关标签**：#量化交易 #... #Python #vnpy
@@ -100,6 +114,19 @@ Every article ends with these three sections in order:
 2. **知识星球** section with QR code image
 3. **往期文章回顾** with real links from README_atmquant.md (NEVER fabricate links)
 4. **相关标签**
+
+### 往期文章回顾 Rules
+
+**Format**: Use unordered lists (`-`), NOT ordered lists (`1.`). Ordered lists break line rendering in WeChat.
+
+**Series order** (must follow this exact order):
+1. 量化策略开发系列
+2. 以AI量化为生系列
+3. 量化指标解码系列
+
+**Article selection**: Each series lists exactly 3 articles:
+- The **first article** of the series (e.g., XX01)
+- The **two most recently published** articles
 
 ### Opening Blockquote Format
 
@@ -143,7 +170,9 @@ Run these checks AFTER writing, before finalizing:
 - No banned machine-like phrases (see DON'T list)
 - Code blocks each under 20 lines
 - Footer has all 4 parts (credit, 知识星球, 往期回顾, tags)
-- 往期文章 links are real URLs from README_atmquant.md
+- 往期文章 uses unordered lists (`-`), NOT ordered lists (`1.`)
+- 往期文章 series order: 量化策略开发 → 以AI量化为生 → 量化指标解码
+- 往期文章 links are real URLs (never fabricate)
 
 ### L2: Style Consistency
 - Opening blockquote matches series format

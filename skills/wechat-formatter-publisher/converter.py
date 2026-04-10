@@ -96,10 +96,10 @@ def _preprocess_list_spacing(md_text: str) -> str:
     lines = md_text.split("\n")
     result = []
     for i, line in enumerate(lines):
-        if i > 0 and re.match(r"^\s*[-*+]\s", line):
+        if i > 0 and re.match(r"^\s*([-*+]|\d+\.)\s", line):
             prev = result[-1] if result else ""
             # Only insert blank if previous line is not blank and not itself a list item
-            if prev.strip() and not re.match(r"^\s*[-*+]\s", prev):
+            if prev.strip() and not re.match(r"^\s*([-*+]|\d+\.)\s", prev):
                 result.append("")
         result.append(line)
     return "\n".join(result)
@@ -173,9 +173,18 @@ def _apply_theme_to_soup(
             code_tag = element.find("code")
             if code_tag:
                 code_text = code_tag.get_text()
+                # Extract language from class attribute (e.g. "language-python")
+                lang = ""
+                cls = code_tag.get("class", "")
+                if isinstance(cls, list):
+                    cls = " ".join(cls)
+                lang_match = re.search(r"language-(\w+)", cls)
+                if lang_match:
+                    lang = lang_match.group(1)
             else:
                 code_text = element.get_text()
-            result_parts.append(theme.code_block(code_text, palette))
+                lang = ""
+            result_parts.append(theme.code_block(code_text, palette, lang))
 
         elif tag == "ul":
             items = []
@@ -297,11 +306,12 @@ def convert(md_text: str, theme_name: str = "claude", color: str | None = None, 
     body_md = _preprocess_list_spacing(body_md)
 
     # Parse markdown to HTML using python-markdown
-    md_extensions = ["fenced_code", "tables", "codehilite"]
+    # NOTE: Do NOT use codehilite — it wraps code in <div class="highlight">
+    # which the theme renderer skips. We use our own Pygments inline highlighter.
+    md_extensions = ["fenced_code", "tables"]
     md_html = markdown.markdown(
         body_md,
         extensions=md_extensions,
-        extension_configs={"codehilite": {"css_class": "highlight"}},
     )
 
     # Parse with BeautifulSoup for DOM manipulation

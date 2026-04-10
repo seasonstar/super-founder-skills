@@ -46,9 +46,9 @@ def derive_palette(primary: str) -> dict[str, str]:
         "bg_gray": "#FAF9F7",
         "text_color": "#2D2D2D",
         "heading_color": "#1A1A1A",
-        "code_bg": "#2D2D2D",
-        "code_text": "#E8E8E8",
-        "code_comment": "#6A9955",
+        "code_bg": "#F6F5F0",
+        "code_text": "#24292F",
+        "code_comment": "#6E7781",
     }
 
 

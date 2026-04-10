@@ -7,6 +7,7 @@ Default primary: #D97757
 import html as html_module
 
 from color_utils import derive_palette, hex_to_rgb
+from highlight import highlight_code
 
 
 def get_palette(primary: str = "#D97757") -> dict:
@@ -89,18 +90,8 @@ def inline_code(text: str, palette: dict) -> str:
     )
 
 
-def code_block(content: str, palette: dict) -> str:
-    lines = content.split("\n")
-    html_lines = []
-    for line in lines:
-        escaped = html_module.escape(line)
-        # Replace only leading spaces with &nbsp;
-        stripped = escaped.lstrip(" ")
-        leading = len(escaped) - len(stripped)
-        nbsp_prefix = "&nbsp;" * leading if leading else ""
-        rendered = nbsp_prefix + stripped
-        html_lines.append(rendered)
-    body = "<br>\n".join(html_lines)
+def code_block(content: str, palette: dict, language: str = "") -> str:
+    body = highlight_code(content, language) if content.strip() else ""
     return (
         f'<section style="background-color: {palette["code_bg"]}; color: {palette["code_text"]}; '
         f'padding: 16px 20px; border-radius: 8px; margin: 20px 0; '
