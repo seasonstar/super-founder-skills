@@ -7,6 +7,7 @@ Default primary: #D97757
 import html as html_module
 
 from color_utils import derive_palette, hex_to_rgb
+from highlight import highlight_code
 
 
 def get_palette(primary: str = "#D97757") -> dict:
@@ -77,18 +78,8 @@ def inline_code(text: str, palette: dict) -> str:
     )
 
 
-def code_block(content: str, palette: dict) -> str:
-    lines = content.split("\n")
-    html_lines = []
-    for line in lines:
-        escaped = html_module.escape(line)
-        # Replace only leading spaces with &nbsp;
-        stripped = escaped.lstrip(" ")
-        leading = len(escaped) - len(stripped)
-        nbsp_prefix = "&nbsp;" * leading if leading else ""
-        rendered = nbsp_prefix + stripped
-        html_lines.append(rendered)
-    body = "<br>\n".join(html_lines)
+def code_block(content: str, palette: dict, language: str = "") -> str:
+    body = highlight_code(content, language) if content.strip() else ""
     return (
         f'<section style="background-color: {palette["code_bg"]}; color: {palette["code_text"]}; '
         f'padding: 16px 20px; border-radius: 8px; margin: 20px 0; '
@@ -119,16 +110,17 @@ def unordered_list(items: list[str], palette: dict) -> str:
 
 def ordered_list(items: list[str], palette: dict) -> str:
     li_items = "".join(
-        f'<li style="margin-bottom: 10px; font-size: 16px; line-height: 1.8;">{item}</li>'
-        for item in items
+        f'<section style="margin-bottom: 10px; padding-left: 6px; font-size: 16px; line-height: 1.8;">'
+        f'<span style="color: {palette["primary"]}; margin-right: 6px; font-size: 16px;">{i}.</span>{item}</section>'
+        for i, item in enumerate(items, 1)
     )
-    return f'<ol style="margin-bottom: 20px; padding-left: 20px;">{li_items}</ol>'
+    return f'<section style="margin-bottom: 20px;">{li_items}</section>'
 
 
 def table(headers: list[str], rows: list[list[str]], palette: dict) -> str:
     th_cells = "".join(
-        f'<th style="padding: 12px 15px; text-align: left; border: 1px solid #E5E5E5; '
-        f'background-color: {palette["primary"]}; color: #FFFFFF; font-size: 16px;">'
+        f'<th style="padding: 8px 10px; text-align: left; border: 1px solid #E5E5E5; '
+        f'background-color: {palette["primary"]}; color: #FFFFFF; font-size: 14px;">'
         f'{h}</th>'
         for h in headers
     )
@@ -136,13 +128,13 @@ def table(headers: list[str], rows: list[list[str]], palette: dict) -> str:
     for i, row in enumerate(rows):
         bg = "#FFFFFF" if i % 2 == 0 else palette["bg_gray"]
         td_cells = "".join(
-            f'<td style="padding: 12px 15px; border: 1px solid #E5E5E5; '
-            f'background-color: {bg}; font-size: 16px;">{cell}</td>'
+            f'<td style="padding: 8px 10px; border: 1px solid #E5E5E5; '
+            f'background-color: {bg}; font-size: 14px;">{cell}</td>'
             for cell in row
         )
         tr_rows += f"<tr>{td_cells}</tr>"
     return (
-        f'<table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 16px;">'
+        f'<table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">'
         f"<thead><tr>{th_cells}</tr></thead><tbody>{tr_rows}</tbody></table>"
     )
 
