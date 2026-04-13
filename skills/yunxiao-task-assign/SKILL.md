@@ -9,17 +9,25 @@ description: 云效任务分配。在云效"业财一体化"项目中创建任�
 
 ```
 # 快速分配
-把"修复登录bug"分配给张三
-创建任务"数据接口开发"并分配给李四
+把"修复登录bug"分配给林小鹏
+创建任务"数据接口开发"并分配给李铭发
 
 # 带详情分配
-给王五分配任务：优化ERP查询性能，优先级高，属于Sprint 17
+给龚宏飞分配任务：优化ERP查询性能，优先级高，属于Sprint 17
 
 # 批量分配
-创建以下任务并分配给赵六：
+创建以下任务并分配给赖武法：
 1. 数据库索引优化
 2. 查询性能测试
 3. 监控告警配置
+```
+
+底层执行使用本技能自带 OpenAPI 脚本，不依赖 Codex MCP：
+
+```bash
+python3 /Users/mac/.cc-switch/skills/yunxiao-task-assign/scripts/yunxiao-task-assign.py \
+  --title "修复登录bug" \
+  --assignee "林小鹏"
 ```
 
 ---
@@ -32,8 +40,9 @@ description: 云效任务分配。在云效"业财一体化"项目中创建任�
 | **必填项** | 任务标题 + 负责人 |
 | **可选项** | 优先级、迭代、描述、截止日期 |
 | **默认迭代** | 当前时段进行中的Sprint，无则取下一个 |
-| **支持人员** | 从 `~/.yunxiao/config.json` 的 `members` 读取 |
+| **支持人员** | 林小鹏、佘溢钶、赖武法、李铭发、龚宏飞、邹凯平 |
 | **企微通知** | 创建后自动推送IT群 |
+| **调用方式** | 直接调用云效 OpenAPI；不使用 `mcp__yunxiao__*` |
 
 ---
 
@@ -43,7 +52,7 @@ description: 云效任务分配。在云效"业财一体化"项目中创建任�
 ✅ 任务创建成功
 
 📋 任务信息
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 标题：[任务名称]
 负责人：[姓名]
 优先级：[高/中/低]
@@ -58,29 +67,17 @@ https://devops.aliyun.com/...
 
 ---
 
-## 🔧 依赖的 MCP 工具
+## 🔧 配置
 
-按顺序调用以下 MCP 工具完成任务：
-
-| 步骤 | MCP 工具 | 用途 |
-|------|---------|------|
-| 1 | `mcp__alibabacloud-devops__search_projects` | 获取项目 ID |
-| 2 | `mcp__alibabacloud-devops__search_organization_members` | 获取用户 ID |
-| 3 | `mcp__alibabacloud-devops__list_sprints` | 获取迭代列表 |
-| 4 | `mcp__yunxiao__get_work_item_types` | 获取工作项类型 ID |
-| 5 | `mcp__yunxiao__create_work_item` | 创建工作项 |
+| 配置项 | 值 |
+|--------|-----|
+| 云效配置 | `~/.yunxiao/config.json` |
+| 云效令牌 | 优先读取环境变量 `YUNXIAO_ACCESS_TOKEN`，其次读取 `~/.yunxiao/config.json` 或 `~/.codex/config.toml` |
+| 企微Webhook | 从 `~/.yunxiao/config.json` 的 `wecomWebhook` 读取 |
+| 连通性测试 | `python3 /Users/mac/.cc-switch/skills/yunxiao-task-assign/scripts/yunxiao-task-assign.py --smoke-test` |
 
 ---
 
 ## 📖 详细指南
 
 - **执行步骤**: 参考 [GUIDE.md](GUIDE.md)
-
----
-
-## 🔧 配置
-
-| 配置项 | 值 |
-|--------|-----|
-| 企微Webhook | 从 `~/.yunxiao/config.json` 的 `wecomWebhook` 读取 |
-| 云效配置 | `~/.yunxiao/config.json`（组织ID、成员映射、Webhook） |
