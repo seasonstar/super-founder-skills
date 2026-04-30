@@ -27,7 +27,7 @@ mcporter call dingtalk-ai-table query_records \
 调用 `yunxiao-weekly-report` 技能获取当前 Sprint 的实际时间排期，用于验证钉钉表格中的项目状态和日期：
 
 ```bash
-python3 /Users/mac/.claude/skills/super-founder-skills/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-report.py \
+python3 ../yunxiao-weekly-report/scripts/yunxiao-weekly-report.py \
   --sprint "Sprint XX" --no-notify --dry-run
 ```
 

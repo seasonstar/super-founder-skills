@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "created": "2026-04-29",
+  "last_practice": "2026-04-30",
+  "total_sessions": 3,
+  "total_questions_answered": 15,
+  "questions": {
+    "默写": {
+      "proc_整合": {
+        "area": "整合管理", "topic": "7个过程名称", "question": "请写出整合管理的7个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 0.71, "last_score": 0.71, "scores": [0.71]
+      },
+      "proc_范围": {
+        "area": "范围管理", "topic": "6个过程名称", "question": "请写出范围管理的6个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 0.83, "last_score": 0.83, "scores": [0.83]
+      },
+      "proc_进度": {
+        "area": "进度管理", "topic": "6个过程名称", "question": "请写出进度管理的6个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 0.75, "last_score": 0.75, "scores": [0.75]
+      },
+      "proc_成本": {
+        "area": "成本管理", "topic": "4个过程名称", "question": "请写出成本管理的4个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 1.0, "last_score": 1.0, "scores": [1.0]
+      },
+      "proc_质量": {
+        "area": "质量管理", "topic": "3个过程名称", "question": "请写出质量管理的3个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 1.0, "last_score": 1.0, "scores": [1.0]
+      },
+      "proc_资源": {
+        "area": "资源管理", "topic": "6个过程名称", "question": "请写出资源管理的6个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 0.92, "last_score": 0.92, "scores": [0.92]
+      },
+      "proc_沟通": {
+        "area": "沟通管理", "topic": "3个过程名称", "question": "请写出沟通管理的3个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 0.67, "last_score": 0.67, "scores": [0.67]
+      },
+      "proc_风险": {
+        "area": "风险管理", "topic": "7个过程名称", "question": "请写出风险管理的7个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 0.86, "last_score": 0.86, "scores": [0.86]
+      },
+      "proc_采购": {
+        "area": "采购管理", "topic": "3个过程名称", "question": "请写出采购管理的3个过程名称",
+        "last_tested": "2026-04-29", "attempts": 1, "best_score": 0.67, "last_score": 0.67, "scores": [0.67]
+      },
+      "proc_干系人": {
+        "area": "干系人管理", "topic": "4个过程名称", "question": "请写出干系人管理的4个过程名称",
+        "last_tested": "2026-04-30", "attempts": 1, "best_score": 0.75, "last_score": 0.75, "scores": [0.75]
+      },
+      "must_变更流程": {
+        "area": "变更管理", "topic": "变更管理8步工作程序", "question": "请写出变更管理8步工作程序",
+        "last_tested": "2026-04-30", "attempts": 1, "best_score": 0.5, "last_score": 0.5, "scores": [0.5]
+      },
+      "must_项目章程": {
+        "area": "整合管理", "topic": "项目章程内容（11项）", "question": "请写出项目章程包含的内容（11项）",
+        "last_tested": "2026-04-30", "attempts": 1, "best_score": 0.36, "last_score": 0.36, "scores": [0.36]
+      },
+      "must_范围说明书": {
+        "area": "范围管理", "topic": "范围说明书内容", "question": "请写出项目范围说明书包含的内容",
+        "last_tested": "2026-04-30", "attempts": 1, "best_score": 0.33, "last_score": 0.33, "scores": [0.33]
+      },
+      "must_风险应对": {
+        "area": "风险管理", "topic": "威胁和机会的风险应对策略", "question": "请分别写出威胁和机会的应对策略（各5种）",
+        "last_tested": "2026-04-30", "attempts": 1, "best_score": 0.8, "last_score": 0.8, "scores": [0.8]
+      },
+      "must_WBS注意": {
+        "area": "范围管理", "topic": "创建WBS的注意事项", "question": "请写出创建WBS的注意事项（8条）",
+        "last_tested": "2026-04-30", "attempts": 1, "best_score": 0.44, "last_score": 0.44, "scores": [0.44]
+      }
+    },
+    "找茬": {}
+  }
+}

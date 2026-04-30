@@ -9,9 +9,11 @@ description: 软考（信息系统项目管理师）案例分析速记练习系�
 
 ## 知识库文件
 
-- **默写题库**：读取 `/Users/mac/code/IT-management/06-个人文件/软考速记/案例分析-十大管理必背速记.md` 获取全部知识点
-- **找茬题库**：读取 `/Users/mac/code/IT-management/06-个人文件/软考速记/案例分析-找茬题答题示范.md` 获取场景和标准答案
-- **进度文件**：`/Users/mac/code/IT-management/06-个人文件/软考速记/.quiz-progress.json`
+以下路径相对于本技能目录（即 `skills/ruankao-quiz/`）：
+
+- **默写题库**：读取 `references/案例分析-十大管理必背速记.md` 获取全部知识点
+- **找茬题库**：读取 `references/案例分析-找茬题答题示范.md` 获取场景和标准答案
+- **进度文件**：`references/.quiz-progress.json`（不存在则创建）
 
 ## 执行流程
 
