@@ -6,12 +6,15 @@ Claude Code 技能集合 - 内容创作与项目管理自动化工具。
 
 | Skill | Description | Trigger |
 |-------|-------------|---------|
+| [wechat-article-writer](skills/wechat-article-writer/) | 微信公众号文章写作辅助 | 公众号写作、微信文章 |
 | [wechat-formatter-publisher](skills/wechat-formatter-publisher/) | Markdown 转微信公众号 HTML 并发布草稿 | 公众号排版、微信文章格式化 |
 | [csdn-article-publish](skills/csdn-article-publish/) | CSDN 博客文章发布（含图片上传） | 发布到CSDN、CSDN草稿箱 |
 | [smart-illustrator](skills/smart-illustrator/) | 智能配图与封面图生成器 | 配图、插图、封面图、PPT |
 | [zsxq-publish](skills/zsxq-publish/) | 知识星球自动化（发帖/回帖/通知） | 知识星球、发帖、zsxq |
 | [yunxiao-task-assign](skills/yunxiao-task-assign/) | 云效任务分配 | 分配任务、创建任务 |
 | [yunxiao-weekly-report](skills/yunxiao-weekly-report/) | 云效迭代周报生成 | 周报、Sprint周报 |
+| [it-sync](skills/it-sync/) | IT双周汇报与排期同步（钉钉数据 + 信息图生成） | IT同步、排期图、双周排期 |
+| [ruankao-quiz](skills/ruankao-quiz/) | 软考案例分析速记练习（AI智能评分） | 软考练习、ruankao、quiz |
 
 ## Installation
 
@@ -24,7 +27,7 @@ Clone 到 `~/.claude/skills/` 下，用 symlink 链接各技能，方便 `git pu
 git clone https://github.com/seasonstar/super-founder-skills.git ~/.claude/skills/super-founder-skills
 
 # 2. 为每个技能创建 symlink
-for skill in wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish yunxiao-task-assign yunxiao-weekly-report; do
+for skill in wechat-article-writer wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish yunxiao-task-assign yunxiao-weekly-report it-sync ruankao-quiz; do
   ln -sf ~/.claude/skills/super-founder-skills/skills/$skill ~/.claude/skills/$skill
 done
 
@@ -143,13 +146,40 @@ EOF
 #    登录云效 > 个人设置 > Access Token > 创建 Token（勾选项目管理权限）
 ```
 
+### wechat-article-writer
+
+微信公众号文章写作辅助，提供选题分析、大纲生成、全文撰写等 AI 辅助写作能力。
+
+无额外配置，开箱即用。
+
+### it-sync
+
+IT 双周汇报与排期同步。自动从钉钉 AI 表格拉取项目数据，生成群通知文案和信息图。
+
+```bash
+# 1. 依赖：钉钉 AI 表格 MCP（dingtalk-ai-table）+ 云效 MCP（yunxiao）
+# 2. 图片生成 API Key（二选一）：
+export ARK_API_KEY="豆包/火山引擎 API Key"        # Seedream 文生图
+export DASHSCOPE_API_KEY="阿里云 DashScope API Key" # Qwen 文生图
+
+# 3. 运行时脚本会同步到项目目录 05-AI与自动化/ 下执行
+```
+
+### ruankao-quiz
+
+软考（信息系统项目管理师）案例分析速记练习系统，开箱即用。
+
+- 默写题库和找茬题库已内置于 `references/` 目录
+- 进度文件 `references/.quiz-progress.json` 自动创建和维护
+- 无需额外配置
+
 ## 更新技能
 
 ```bash
 cd ~/.claude/skills/super-founder-skills && git pull
 ```
 
-使用 symlink 方式安装的，`git pull` 即可同步全部 6 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
+使用 symlink 方式安装的，`git pull` 即可同步全部 9 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
 
 ## License
 
