@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Credentials
+*.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Local personal config (not for git)
+.local/
+
+# Test fixtures（含敏感节点 ID，不提交）
+tests/fixtures/test_data.json
+
+# Test reports（运行时生成，不提交）
+tests/e2e_report.md

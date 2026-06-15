@@ -1,0 +1,51 @@
+{
+  "name": "dingtalk-docs",
+  "version": "0.3.4",
+  "description": "管理钉钉云文档中的文档、文件夹和内容。当用户想要创建文档、创建表格/脑图/白板/演示/多维表等文件、搜索文档、读取或写入文档内容、创建文件夹整理文档、精确编辑文档块元素时使用。也适用于用户提到云文档、在线文档、钉钉文档、钉文档等关键词的场景。不要在用户需要管理日程、发消息或处理审批流时触发。",
+  "keywords": [
+    "dingtalk",
+    "docs",
+    "document",
+    "云文档",
+    "钉钉文档",
+    "在线文档",
+    "openclaw",
+    "skill"
+  ],
+  "author": "Marila@Dingtalk",
+  "contributors": [
+    "Marila@Dingtalk"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/aliramw/dingtalk-docs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aliramw/dingtalk-docs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aliramw/dingtalk-docs/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "mcporter": ">=0.7.0"
+  },
+  "clawhub": {
+    "requiresBinaries": [
+      "mcporter"
+    ],
+    "credentials": [
+      {
+        "name": "DINGTALK_MCP_DOCS_URL",
+        "description": "新版钉钉文档 MCP 的 StreamableHttp 地址（含访问令牌）。请从 https://mcp.dingtalk.com/#/detail?mcpId=9629 获取新版 URL，旧版 URL 不兼容本 Skill v1.0。",
+        "docs": "https://mcp.dingtalk.com/#/detail?mcpId=9629",
+        "storageMethod": "mcporter config (recommended) or environment variable"
+      }
+    ],
+    "notes": "v1.0 需要新版钉钉文档 MCP URL（mcpId=9629），旧版 URL 的工具名不兼容。"
+  },
+  "scripts": {
+    "test": "python3 tests/test_security.py -v"
+  }
+}

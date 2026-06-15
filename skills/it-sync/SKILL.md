@@ -27,7 +27,7 @@ mcporter call dingtalk-ai-table query_records \
 调用 `yunxiao-weekly-report` 技能获取当前 Sprint 的实际时间排期，用于验证钉钉表格中的项目状态和日期：
 
 ```bash
-python3 ../yunxiao-weekly-report/scripts/yunxiao-weekly-report.py \
+python3 /Users/mac/.claude/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-report.py \
   --sprint "Sprint XX" --no-notify --dry-run
 ```
 
@@ -59,7 +59,7 @@ python3 ../yunxiao-weekly-report/scripts/yunxiao-weekly-report.py \
 
 确认后更新 `05-AI与自动化/it_diagram_sync_config.py`。
 
-### Step 5：生成群通知文案
+### Step 5：生成群通知文案并归档
 
 更新 config 后运行验证并输出通知文案：
 
@@ -67,7 +67,12 @@ python3 ../yunxiao-weekly-report/scripts/yunxiao-weekly-report.py \
 cd 05-AI与自动化 && python3 -c "from it_diagram_sync_config import build_sync_notice_text; print(build_sync_notice_text())"
 ```
 
-展示给用户确认。
+展示给用户确认后，**将文案归档到 `01-团队运营/IT双周汇报/` 目录**：
+
+- **命名规则**：`Sprint {N}.md`，N 取当前云效 Sprint 编号
+  - 例：`Sprint 22.md`
+- **内容**：`build_sync_notice_text()` 输出的完整文案
+- 确认后自动写入，无需用户额外操作
 
 ### Step 6：生成排期信息图
 
