@@ -293,15 +293,19 @@ def choose_report_sprint(
     return sorted_sprints[-1]
 
 
-def find_next_sprint(
+def find_next_sprints(
     sprints: list[dict[str, Any]],
     current_sprint_id: str,
-) -> dict[str, Any] | None:
+) -> list[dict[str, Any]]:
     sorted_sprints = sorted(sprints, key=lambda s: sprint_timestamp(s.get("startDate")))
-    for i, sprint in enumerate(sorted_sprints):
-        if sprint.get("id") == current_sprint_id and i + 1 < len(sorted_sprints):
-            return sorted_sprints[i + 1]
-    return None
+    found = False
+    result: list[dict[str, Any]] = []
+    for sprint in sorted_sprints:
+        if found:
+            result.append(sprint)
+        elif sprint.get("id") == current_sprint_id:
+            found = True
+    return result
 
 
 def get_priority(custom_fields: list[dict[str, Any]] | None) -> str:
@@ -318,10 +322,24 @@ def get_priority(custom_fields: list[dict[str, Any]] | None) -> str:
 def categorize_item(subject: str) -> str:
     if subject.startswith("业财一体化"):
         return "业财一体化"
-    if subject.startswith("TK"):
+    # 结算帐单/利润报表 → 利润报表（优先于通用 TK 匹配）
+    if "结算帐单" in subject or "利润报表" in subject or "利润表" in subject or "马帮数据底稿" in subject or "列名对应关系" in subject:
+        return "利润报表"
+    # TK 数据看板
+    if subject.startswith("TK") or subject.startswith("tk") or "TikTok" in subject:
         return "TK数据看板项目"
     if "RPA" in subject:
         return "RPA"
+    if "沃尔玛" in subject:
+        return "爬虫系统"
+    if "物流报关" in subject:
+        return "物流报关系统"
+    if "ERP" in subject or subject.startswith("扫码装箱") or subject.startswith("合作进度表") or subject.startswith("素材回收") or "Tab页" in subject:
+        return "ERP开发"
+    if "金蝶" in subject or "魔角兽" in subject or "勤策" in subject:
+        return "金蝶集成"
+    if "发票智能" in subject or ("发票" in subject and "数字化" in subject):
+        return "发票数字化系统"
     if subject.startswith("运维"):
         return "运维"
     if subject.startswith("学习"):
@@ -346,6 +364,52 @@ def status_completion(status: dict[str, Any]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# CRUD consolidation
+# ---------------------------------------------------------------------------
+
+CRUD_OPERATIONS: frozenset[str] = frozenset(
+    {"列表", "新增", "编辑", "导入导出", "删除", "详情", "查看"}
+)
+
+CRUD_THRESHOLD = 3
+
+
+def _parse_crud(subject: str) -> tuple[str | None, str | None]:
+    clean = subject
+    for suffix in ("-后端", "-前端"):
+        if clean.endswith(suffix):
+            clean = clean[: -len(suffix)]
+            break
+    parts = clean.rsplit("-", 1)
+    if len(parts) == 2 and parts[1] in CRUD_OPERATIONS:
+        return parts[0], parts[1]
+    return None, None
+
+
+def _consolidate(entries: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
+    non_crud: list[tuple[str, str, str]] = []
+    groups: dict[str, dict[str, tuple[str, str]]] = {}
+    for subj, pri, comp in entries:
+        entity, op = _parse_crud(subj)
+        if entity is not None and op is not None:
+            groups.setdefault(entity, {})[op] = (pri, comp)
+        else:
+            non_crud.append((subj, pri, comp))
+    consolidated: list[tuple[str, str, str]] = []
+    for entity, ops in groups.items():
+        if len(ops) >= CRUD_THRESHOLD:
+            ops_str = "/".join(sorted(ops))
+            pries = [p for p, _ in ops.values()]
+            pri = "紧急" if "紧急" in pries else ("高" if "高" in pries else "中")
+            comp = next(iter(ops.values()))[1]
+            consolidated.append((f"{entity} CRUD {len(ops)}项（{ops_str}）", pri, comp))
+        else:
+            for op, (pri, comp) in ops.items():
+                non_crud.append((f"{entity}-{op}", pri, comp))
+    return consolidated + non_crud
+
+
+# ---------------------------------------------------------------------------
 # Report formatting
 # ---------------------------------------------------------------------------
 
@@ -353,7 +417,7 @@ def status_completion(status: dict[str, Any]) -> str:
 def format_member_report(
     member_name: str,
     sprint: dict[str, Any],
-    next_sprint: dict[str, Any] | None,
+    next_sprints: list[dict[str, Any]],
     current_items: list[dict[str, Any]],
     next_items: list[dict[str, Any]],
 ) -> str:
@@ -389,6 +453,7 @@ def format_member_report(
         for subj, pri, comp in wip_by_cat.get(cat, []):
             entries.append((subj, pri, comp))
         if entries:
+            entries = _consolidate(entries)
             has_achievements = True
             lines.append(f"【{cat}】")
             for i, (subj, pri, comp) in enumerate(entries, 1):
@@ -402,11 +467,11 @@ def format_member_report(
 
     # ---- Next sprint plan ----
     lines.append("二、下周期计划")
-    if next_sprint:
-        ns_name = next_sprint.get("name", "未知")
-        ns_start = format_date(next_sprint.get("startDate"))
-        ns_end = format_date(next_sprint.get("endDate"))
-        lines.append(f"（{ns_name}：{ns_start} - {ns_end}）")
+    if next_sprints:
+        ns_names = ", ".join(sorted({s.get("name", "未知") for s in next_sprints}))
+        ns_start = format_date(next_sprints[0].get("startDate"))
+        ns_end = format_date(next_sprints[0].get("endDate"))
+        lines.append(f"（{ns_names}：{ns_start} - {ns_end}）")
 
     next_by_cat: dict[str, list[tuple[str, str, str]]] = {}
     for item in next_items:
@@ -419,6 +484,7 @@ def format_member_report(
     has_plan = False
     for cat, items in next_by_cat.items():
         items.sort(key=lambda x: (0 if x[2] else 1, PRIORITY_ORDER.get(x[1], 2)))
+        items = _consolidate(items)
         if items:
             has_plan = True
             lines.append(f"【{cat}】")
@@ -431,12 +497,23 @@ def format_member_report(
     if not has_plan:
         lines.append("（暂无计划）")
 
+    # Per-member stats
+    n_done = sum(len(v) for v in done_by_cat.values())
+    n_wip = sum(len(v) for v in wip_by_cat.values())
+    n_plan = len(next_items)
+    lines.append("")
+    lines.append("三、数据概览")
+    lines.append(f"本迭代完成 {n_done} | 进行中 {n_wip} | 下迭代计划 {n_plan}")
+
     return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
 # WeChat notification
 # ---------------------------------------------------------------------------
+
+
+MAX_WECOM_BYTES = 4000  # safe limit under 4096
 
 
 def send_wecom_notification(webhook_url: str, content: str) -> bool:
@@ -457,6 +534,40 @@ def send_wecom_notification(webhook_url: str, content: str) -> bool:
         return result.get("errcode") == 0
     except Exception:
         return False
+
+
+def send_wecom_report(webhook_url: str, title: str, report: str) -> bool:
+    """Send a report to WeChat, auto-splitting if content exceeds byte limit."""
+    content = f"### {title}\n\n{report}"
+    if len(content.encode("utf-8")) <= MAX_WECOM_BYTES:
+        return send_wecom_notification(webhook_url, content)
+
+    # Split by category blocks (lines starting with 【)
+    lines = report.split("\n")
+    chunks: list[str] = []
+    current_chunk: list[str] = []
+    header_line = ""  # track section header like "一、核心成果"
+
+    for line in lines:
+        test_chunk = "\n".join(current_chunk + [line])
+        prefix = f"### {title}\n\n"
+        if current_chunk and len((prefix + test_chunk).encode("utf-8")) > MAX_WECOM_BYTES:
+            chunks.append("\n".join(current_chunk))
+            current_chunk = [line]
+        else:
+            current_chunk.append(line)
+
+    if current_chunk:
+        chunks.append("\n".join(current_chunk))
+
+    ok = True
+    total = len(chunks)
+    for i, chunk in enumerate(chunks, 1):
+        suffix = f" ({i}/{total})" if total > 1 else ""
+        c = f"### {title}{suffix}\n\n{chunk}"
+        if not send_wecom_notification(webhook_url, c):
+            ok = False
+    return ok
 
 
 # ---------------------------------------------------------------------------
@@ -517,7 +628,7 @@ def main() -> int:
     buffer_days = int(config.get("bufferDays", DEFAULT_BUFFER_DAYS))
     target_sprint = choose_report_sprint(sprints, buffer_days, args.sprint)
     target_sprint_id = str(target_sprint.get("id"))
-    next_sprint = find_next_sprint(sprints, target_sprint_id)
+    next_sprints = find_next_sprints(sprints, target_sprint_id)
 
     # Determine members
     all_members: dict[str, str] = dict(config.get("members", {}))
@@ -542,8 +653,9 @@ def main() -> int:
         print("周报预检通过（dry-run）")
         print(f"项目：{config['projectName']} ({project_id})")
         print(f"目标迭代：{target_sprint.get('name')} ({format_date(target_sprint.get('startDate'))} - {format_date(target_sprint.get('endDate'))})")
-        if next_sprint:
-            print(f"下个迭代：{next_sprint.get('name')}")
+        if next_sprints:
+            names = ", ".join(s.get("name", "") for s in next_sprints)
+            print(f"下个迭代：{names}")
         print(f"汇报人员：{', '.join(target_members.keys())}")
         return 0
 
@@ -570,12 +682,12 @@ def main() -> int:
         cur_items = cur_result.get("items", [])
 
         next_items: list[dict[str, Any]] = []
-        if next_sprint:
+        for ns in next_sprints:
             nxt_result = client.search_workitems(
                 space_id=project_id, assigned_to=user_id,
-                sprint_id=str(next_sprint.get("id")),
+                sprint_id=str(ns.get("id")),
             )
-            next_items = nxt_result.get("items", [])
+            next_items.extend(nxt_result.get("items", []))
 
         # Statistics
         for item in cur_items:
@@ -592,7 +704,7 @@ def main() -> int:
             elif comp != "完成":
                 total_in_progress += 1
 
-        report = format_member_report(name, target_sprint, next_sprint, cur_items, next_items)
+        report = format_member_report(name, target_sprint, next_sprints, cur_items, next_items)
         reports.append((name, report))
 
         if len(target_members) > 1:
@@ -601,25 +713,18 @@ def main() -> int:
         print(report)
         print()
 
-    # Summary
-    print(sep)
-    print(f"统计：已完成 {total_completed} | 进行中 {total_in_progress} | 待处理 {total_pending}")
-    print(sep)
-
-    # WeChat notification
+    # WeChat notification (per-person to avoid message size limit)
     if not args.no_notify:
-        webhook = config.get("wecomWebhook")
+        webhook = config.get("wecomReportWebhook") or config.get("wecomWebhook")
         if webhook:
-            if len(reports) == 1:
-                content = f"### 【{reports[0][0]}】周报\n\n{reports[0][1]}"
-            else:
-                parts = [f"### 【{name}】周报\n\n{report}" for name, report in reports]
-                content = "\n\n---\n\n".join(parts)
-            ok = send_wecom_notification(str(webhook), content)
-            if ok:
-                print("\n已推送企微通知到IT群")
-            else:
-                print("\n企微通知推送失败")
+            ok_count = 0
+            for name, report in reports:
+                if send_wecom_report(str(webhook), f"【{name}】周报", report):
+                    ok_count += 1
+                else:
+                    print(f"\n企微通知推送失败：{name}")
+            if ok_count:
+                print(f"\n已推送 {ok_count}/{len(reports)} 人周报到企微IT群")
 
     return 0
 

@@ -314,10 +314,14 @@ DASHSCOPE_API_KEY=$DASHSCOPE_API_KEY npx -y bun ~/.claude/skills/smart-illustrat
 
 **参数传递**：用户指定的 `--ref`、`-c` 必须传递给脚本。
 
-### Step 4: 创建带配图的文章
+### Step 4: 插入配图到原文件
 
-保存为 `{文章名}-image.md`，包含：
-- 正文配图插入
+**直接在原文件中插入图片引用**，不创建新文件。
+
+1. 使用 Edit 工具在原文件的分析位置插入 `![描述](images/xxx.png)` 图片引用
+2. 封面图插入在文章标题之后、正文之前
+3. 正文配图插入在对应段落之后
+4. 图片插入前需先用 Read 工具读取原文件，确认插入位置准确
 
 **禁止添加 YAML frontmatter**（`---` + `title:` + `cover:`）。文章直接从正文开始，不添加任何元数据头。
 
@@ -346,12 +350,11 @@ echo "✓ 备份已保存到 /tmp/smart-illustrator-prompt.json"
 
 ## 输出文件
 
-**默认存储路径**：所有图片输出到**文章所在目录的 `images/` 子目录**。
+**默认存储路径**：所有图片输出到**文章所在目录的 `images/` 子目录**。图片引用**直接插入原文件**。
 
 ```
 articles/
-├── article.md                      # 原文（不修改）
-├── article-image.md                # 带配图的文章
+├── article.md                      # 原文（图片引用直接插入此文件）
 └── images/
     ├── article-cover.png           # 封面图
     ├── article-image-01.png        # 正文配图1
@@ -362,4 +365,3 @@ articles/
 **命名规则**：
 - 封面图：`{文章名}-cover.png`
 - 正文配图：`{文章名}-image-{序号}.png`（序号从01开始）
-- 带配图文章：`{文章名}-image.md`（文章同级目录）

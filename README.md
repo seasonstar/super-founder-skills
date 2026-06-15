@@ -15,6 +15,14 @@ Claude Code 技能集合 - 内容创作与项目管理自动化工具。
 | [yunxiao-weekly-report](skills/yunxiao-weekly-report/) | 云效迭代周报生成 | 周报、Sprint周报 |
 | [it-sync](skills/it-sync/) | IT双周汇报与排期同步（钉钉数据 + 信息图生成） | IT同步、排期图、双周排期 |
 | [ruankao-quiz](skills/ruankao-quiz/) | 软考案例分析速记练习（AI智能评分） | 软考练习、ruankao、quiz |
+| [project-decision-log](skills/project-decision-log/) | 会议录音笔记提炼，生成项目决议日志（changelog 式） | 总结会议、会议决议、提炼会议、会议纪要 |
+| [dingtalk-ai-table](skills/dingtalk-ai-table/) | 钉钉 AI 表格（多维表）操作 | 钉钉表格、AI表格、多维表 |
+| [dingtalk-docs](skills/dingtalk-docs/) | 钉钉云文档管理（文档/表格/脑图/文件夹） | 钉钉文档、云文档、创建文档 |
+| [wukong-knowledge-audit](skills/wukong-knowledge-audit/) | 钉钉知识库系统性诊断审计 | 审计知识库、知识库体检、文档索引 |
+| [12306-train-query](skills/12306-train-query/) | 12306 火车票班次查询 | 查火车票、12306、车次 |
+| [ctrip-flight-search](skills/ctrip-flight-search/) | 携程航班查询（单程/往返） | 查机票、携程航班、航班查询 |
+| [dianping-info-query](skills/dianping-info-query/) | 大众点评商户信息查询 | 大众点评、查店铺、商户评分 |
+| [professional-patent-agents](skills/professional-patent-agents/) | 专利撰写与优化多代理套件 | 专利撰写、专利优化、权利要求、技术交底书 |
 
 ## Installation
 
@@ -27,7 +35,7 @@ Clone 到 `~/.claude/skills/` 下，用 symlink 链接各技能，方便 `git pu
 git clone https://github.com/seasonstar/super-founder-skills.git ~/.claude/skills/super-founder-skills
 
 # 2. 为每个技能创建 symlink
-for skill in wechat-article-writer wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish yunxiao-task-assign yunxiao-weekly-report it-sync ruankao-quiz; do
+for skill in wechat-article-writer wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish yunxiao-task-assign yunxiao-weekly-report it-sync ruankao-quiz project-decision-log dingtalk-ai-table dingtalk-docs wukong-knowledge-audit 12306-train-query ctrip-flight-search dianping-info-query professional-patent-agents pm-ruankao-paper-generator; do
   ln -sf ~/.claude/skills/super-founder-skills/skills/$skill ~/.claude/skills/$skill
 done
 
@@ -173,13 +181,46 @@ export DASHSCOPE_API_KEY="阿里云 DashScope API Key" # Qwen 文生图
 - 进度文件 `references/.quiz-progress.json` 自动创建和维护
 - 无需额外配置
 
+### dingtalk-ai-table & dingtalk-docs
+
+钉钉 AI 表格 + 云文档操作，通过 mcporter 连接钉钉官方 MCP server。
+
+```bash
+# 1. 安装 mcporter
+npm install -g mcporter
+
+# 2. 配置 MCP URL（从 https://mcp.dingtalk.com 获取）
+mcporter config add dingtalk-ai-table --type streamable-http --url "<你的MCP URL>"
+mcporter config add dingtalk-docs --type streamable-http --url "<你的MCP URL>"
+```
+
+### wukong-knowledge-audit
+
+钉钉知识库诊断审计，依赖钉钉文档 MCP（dingtalk-docs）。开箱即用，无需额外配置。
+
+### 12306-train-query / ctrip-flight-search / dianping-info-query
+
+出行与本地生活查询类技能，基于浏览器自动化操作，无需额外配置。
+
+### professional-patent-agents
+
+专利撰写与优化多代理套件，覆盖专利申请全流程。
+
+```bash
+# 依赖（可选）：
+# - exa MCP（web 检索）
+# - aminer-data-search（学术/专利检索，需 AMINER_API_KEY）
+# - pandoc（Markdown 转 Word）
+pip install requests python-docx
+```
+
 ## 更新技能
 
 ```bash
 cd ~/.claude/skills/super-founder-skills && git pull
 ```
 
-使用 symlink 方式安装的，`git pull` 即可同步全部 9 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
+使用 symlink 方式安装的，`git pull` 即可同步全部 19 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
 
 ## License
 
