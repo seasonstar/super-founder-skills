@@ -165,13 +165,13 @@ const ratioMapDefault: Record<string, string> = {
   '2.35:1': '1344*572'
 };
 
-async function generateImage(
+async function generateImageOnce(
   prompt: string,
   model: string,
   apiKey: string,
   aspectRatio: string = '16:9',
   size: 'default' | '2k' = 'default'
-): Promise<Buffer | null> {
+): Promise<{ buffer: Buffer | null; status: number; retryable: boolean }> {
   const ratioMap = size === '2k' ? ratioMap2K : ratioMapDefault;
   const dimensions = ratioMap[aspectRatio] || ratioMap['16:9'];
 
@@ -203,12 +203,27 @@ async function generateImage(
     body: JSON.stringify(requestBody)
   });
 
+  // 429 / 5xx → 可重试；其它非 2xx / 业务错误码 → 不重试
+  const retryable = response.status === 429 || response.status >= 500;
+
+  if (!response.ok) {
+    let bodyText = '';
+    try { bodyText = await response.text(); } catch { /* ignore */ }
+    return { buffer: null, status: response.status, retryable };
+  }
+
   const data: QwenResponse = await response.json();
 
   // Enhanced error handling
-  if (!response.ok || data.code || (data.status_code && data.status_code !== 200)) {
+  if (data.code || (data.status_code && data.status_code !== 200)) {
     const errorMsg = data.message || `HTTP ${response.status}: ${response.statusText}`;
     const errorCode = data.code || data.status_code?.toString() || 'unknown';
+    // 常见限流类业务码也视作可重试
+    const codeStr = String(errorCode);
+    const bizRetryable = codeStr === '429' || codeStr.includes('Throttling') || codeStr.includes('Rate');
+    if (bizRetryable) {
+      return { buffer: null, status: 429, retryable: true };
+    }
     throw new Error(`Qwen API Error: ${errorMsg} (code: ${errorCode})`);
   }
 
@@ -219,20 +234,77 @@ async function generateImage(
       if (part.image) {
         // Download image from URL
         const imageUrl = part.image;
-        console.log(`  Downloading image from Qwen...`);
-
         const imageResponse = await fetch(imageUrl);
         const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-        return imageBuffer;
+        return { buffer: imageBuffer, status: 200, retryable: false };
       }
     }
   }
 
+  return { buffer: null, status: 200, retryable: false };
+}
+
+/**
+ * 并发安全 + 限流重试的生图入口。
+ * 遇到 429 / 5xx 按指数退避重试（1s → 2s → 4s ...），最多 maxRetries 次。
+ */
+const MAX_RETRIES = 4;
+const INITIAL_BACKOFF_MS = 1000;
+
+async function generateImage(
+  prompt: string,
+  model: string,
+  apiKey: string,
+  aspectRatio: string = '16:9',
+  size: 'default' | '2k' = 'default'
+): Promise<Buffer | null> {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const result = await generateImageOnce(prompt, model, apiKey, aspectRatio, size);
+    if (result.buffer !== null) {
+      return result.buffer;
+    }
+    if (!result.retryable || attempt === MAX_RETRIES) {
+      if (result.status !== 200) {
+        throw new Error(`Qwen API Error: HTTP ${result.status}${result.retryable ? ' (rate-limited, retries exhausted)' : ''}`);
+      }
+      return null;
+    }
+    // 指数退避：1s → 2s → 4s → 8s，并加 ±20% 抖动避免并发群体同步重试
+    const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+    const jitter = backoff * (0.8 + Math.random() * 0.4);
+    console.log(`  ⏳ 限流(HTTP ${result.status})，第 ${attempt + 1}/${MAX_RETRIES} 次重试，等待 ${(jitter / 1000).toFixed(1)}s...`);
+    await sleep(Math.round(jitter));
+  }
   return null;
 }
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 简易 Promise 并发池：最多同时执行 concurrency 个任务，保持顺序无关。
+ * 任务完成一个就立即启动下一个（非批次式），最大化吞吐。
+ */
+async function runWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+
+  async function runNext(): Promise<void> {
+    while (true) {
+      const idx = cursor++;
+      if (idx >= items.length) return;
+      results[idx] = await worker(items[idx], idx);
+    }
+  }
+
+  const lanes = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: lanes }, () => runNext()));
+  return results;
 }
 
 function printUsage(): never {
@@ -247,10 +319,12 @@ Options:
   -o, --output-dir <path>   Output directory (default: ./illustrations)
   -m, --model <model>       Model to use (default: qwen-image-2.0-pro)
   -s, --size <size>         Image size: 2k (2048px) or default (~1K, default)
-  -d, --delay <ms>          Delay between requests in ms (default: 2000)
+  -d, --delay <ms>          Delay between requests in ms (serial mode only, default: 2000)
   -p, --prefix <text>       Filename prefix (default: from config filename)
   -r, --regenerate <ids>    Regenerate specific images (e.g., "3" or "3,5,7")
   -f, --force               Force regenerate all images (ignore existing)
+      --concurrency <n>     Parallel image generation (default: 3). 1 = serial.
+                            Increase only if your DashScope account has higher QPS.
   -h, --help                Show this help
 
 Resume Generation:
@@ -295,6 +369,7 @@ async function main() {
   let prefix: string | null = null;
   let forceRegenerate = false;
   let regenerateIds: Set<number> | null = null;
+  let concurrency = 3;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -337,6 +412,9 @@ async function main() {
           args[++i].split(',').map(id => parseInt(id.trim(), 10))
         );
         break;
+      case '--concurrency':
+        concurrency = Math.max(1, parseInt(args[++i], 10) || 3);
+        break;
     }
   }
 
@@ -377,7 +455,11 @@ async function main() {
     console.log(`Total: ${total} images`);
     console.log(`Prefix: ${prefix}`);
     console.log(`Output: ${outputDir}`);
-    console.log(`Delay: ${delay}ms between requests`);
+    if (concurrency > 1) {
+      console.log(`Concurrency: ${concurrency} (parallel)`);
+    } else {
+      console.log(`Delay: ${delay}ms between requests (serial mode)`);
+    }
     if (forceRegenerate) {
       console.log(`Mode: Force regenerate all`);
     } else if (regenerateIds) {
@@ -387,13 +469,12 @@ async function main() {
     }
     console.log();
 
-    let needsDelay = false;
-
+    // 先过滤出需要生成的项（跳过已存在）
+    const todo: { picture: PictureConfig; filename: string; outputPath: string }[] = [];
     for (const picture of config.pictures) {
       const filename = `${prefix}-${String(picture.id).padStart(2, '0')}.png`;
       const outputPath = join(outputDir, filename);
 
-      // Check if we should skip this image
       const fileExists = existsSync(outputPath);
       const shouldRegenerate = regenerateIds?.has(picture.id);
       const shouldSkip = fileExists && !forceRegenerate && !shouldRegenerate;
@@ -401,41 +482,57 @@ async function main() {
       if (shouldSkip) {
         console.log(`[${picture.id}/${total}] Skipping: ${filename} (already exists)`);
         skipped++;
-        continue;
+      } else {
+        todo.push({ picture, filename, outputPath });
       }
+    }
 
-      // Add delay before generation (except for first image)
-      if (needsDelay) {
-        console.log(`  Waiting ${delay}ms...`);
-        await sleep(delay);
+    if (todo.length > 0) {
+      if (concurrency > 1) {
+        console.log(`Generating ${todo.length} image(s) in parallel (concurrency=${concurrency})...\n`);
       }
+      const startTime = Date.now();
+      let completed = 0;
 
-      console.log(`[${picture.id}/${total}] Generating: ${filename}`);
-      console.log(`  Topic: ${picture.topic}`);
-      if (shouldRegenerate) {
-        console.log(`  (Regenerating as requested)`);
-      }
+      await runWithConcurrency(todo, concurrency, async (task) => {
+        const { picture, filename, outputPath } = task;
+        const shouldRegenerate = regenerateIds?.has(picture.id);
 
-      try {
-        const prompt = buildPromptFromUnified(picture, config.style);
-        const imageBuffer = await generateImage(prompt, model, apiKey, config.batch_rules?.aspect_ratio || '16:9', size);
-
-        if (imageBuffer) {
-          await mkdir(dirname(outputPath), { recursive: true });
-          await writeFile(outputPath, imageBuffer);
-          console.log(`  ✓ Saved (${(imageBuffer.length / 1024).toFixed(1)} KB)`);
-          success++;
-          needsDelay = true;
-        } else {
-          console.log(`  ✗ No image generated`);
-          failed++;
-          needsDelay = true;
+        // 串行模式：除第一张外，每张前 sleep
+        if (concurrency === 1 && completed > 0) {
+          console.log(`  Waiting ${delay}ms...`);
+          await sleep(delay);
         }
-      } catch (error) {
-        console.log(`  ✗ Error: ${error instanceof Error ? error.message : error}`);
-        failed++;
-        needsDelay = true;
-      }
+
+        console.log(`[${picture.id}/${total}] Generating: ${filename}`);
+        console.log(`  Topic: ${picture.topic}`);
+        if (shouldRegenerate) {
+          console.log(`  (Regenerating as requested)`);
+        }
+
+        try {
+          const prompt = buildPromptFromUnified(picture, config.style);
+          const imageBuffer = await generateImage(prompt, model, apiKey, config.batch_rules?.aspect_ratio || '16:9', size);
+
+          completed++;
+          if (imageBuffer) {
+            await mkdir(dirname(outputPath), { recursive: true });
+            await writeFile(outputPath, imageBuffer);
+            console.log(`  ✓ Saved (${(imageBuffer.length / 1024).toFixed(1)} KB) [${completed}/${todo.length}]`);
+            success++;
+          } else {
+            console.log(`  ✗ No image generated [${completed}/${todo.length}]`);
+            failed++;
+          }
+        } catch (error) {
+          completed++;
+          console.log(`  ✗ Error: ${error instanceof Error ? error.message : error} [${completed}/${todo.length}]`);
+          failed++;
+        }
+      });
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`\nElapsed: ${elapsed}s (avg ${(parseFloat(elapsed) / todo.length).toFixed(1)}s/image)`);
     }
 
     console.log(`\n=======================================`);
@@ -466,6 +563,11 @@ async function main() {
     console.log(`Size: ${size}`);
     console.log(`Total: ${total} images`);
     console.log(`Output: ${outputDir}`);
+    if (concurrency > 1) {
+      console.log(`Concurrency: ${concurrency} (parallel)`);
+    } else {
+      console.log(`Delay: ${delay}ms between requests (serial mode)`);
+    }
     if (forceRegenerate) {
       console.log(`Mode: Force regenerate all`);
     } else if (regenerateIds) {
@@ -475,12 +577,10 @@ async function main() {
     }
     console.log();
 
-    let needsDelay = false;
-
+    // 先过滤出需要生成的项（跳过已存在）
+    const legacyTodo: { illustration: LegacyIllustration; outputPath: string }[] = [];
     for (const illustration of legacyConfig.illustrations) {
       const outputPath = join(outputDir, illustration.filename);
-
-      // Check if we should skip this image
       const fileExists = existsSync(outputPath);
       const shouldRegenerate = regenerateIds?.has(illustration.id);
       const shouldSkip = fileExists && !forceRegenerate && !shouldRegenerate;
@@ -488,39 +588,54 @@ async function main() {
       if (shouldSkip) {
         console.log(`[${illustration.id}/${total}] Skipping: ${illustration.filename} (already exists)`);
         skipped++;
-        continue;
+      } else {
+        legacyTodo.push({ illustration, outputPath });
       }
+    }
 
-      // Add delay before generation (except for first image)
-      if (needsDelay) {
-        await sleep(delay);
+    if (legacyTodo.length > 0) {
+      if (concurrency > 1) {
+        console.log(`Generating ${legacyTodo.length} image(s) in parallel (concurrency=${concurrency})...\n`);
       }
+      const startTime = Date.now();
+      let completed = 0;
 
-      console.log(`[${illustration.id}/${total}] Generating: ${illustration.filename}`);
-      if (shouldRegenerate) {
-        console.log(`  (Regenerating as requested)`);
-      }
+      await runWithConcurrency(legacyTodo, concurrency, async (task) => {
+        const { illustration, outputPath } = task;
+        const shouldRegenerate = regenerateIds?.has(illustration.id);
 
-      try {
-        const prompt = buildPromptFromLegacy(illustration, legacyConfig.style);
-        const imageBuffer = await generateImage(prompt, model, apiKey, '16:9', size);
-
-        if (imageBuffer) {
-          await mkdir(dirname(outputPath), { recursive: true });
-          await writeFile(outputPath, imageBuffer);
-          console.log(`  ✓ Saved (${(imageBuffer.length / 1024).toFixed(1)} KB)`);
-          success++;
-          needsDelay = true;
-        } else {
-          console.log(`  ✗ No image generated`);
-          failed++;
-          needsDelay = true;
+        if (concurrency === 1 && completed > 0) {
+          await sleep(delay);
         }
-      } catch (error) {
-        console.log(`  ✗ Error: ${error instanceof Error ? error.message : error}`);
-        failed++;
-        needsDelay = true;
-      }
+
+        console.log(`[${illustration.id}/${total}] Generating: ${illustration.filename}`);
+        if (shouldRegenerate) {
+          console.log(`  (Regenerating as requested)`);
+        }
+
+        try {
+          const prompt = buildPromptFromLegacy(illustration, legacyConfig.style);
+          const imageBuffer = await generateImage(prompt, model, apiKey, '16:9', size);
+
+          completed++;
+          if (imageBuffer) {
+            await mkdir(dirname(outputPath), { recursive: true });
+            await writeFile(outputPath, imageBuffer);
+            console.log(`  ✓ Saved (${(imageBuffer.length / 1024).toFixed(1)} KB) [${completed}/${legacyTodo.length}]`);
+            success++;
+          } else {
+            console.log(`  ✗ No image generated [${completed}/${legacyTodo.length}]`);
+            failed++;
+          }
+        } catch (error) {
+          completed++;
+          console.log(`  ✗ Error: ${error instanceof Error ? error.message : error} [${completed}/${legacyTodo.length}]`);
+          failed++;
+        }
+      });
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`\nElapsed: ${elapsed}s (avg ${(parseFloat(elapsed) / legacyTodo.length).toFixed(1)}s/image)`);
     }
 
     console.log(`\n======================================`);

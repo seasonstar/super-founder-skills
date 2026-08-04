@@ -76,8 +76,23 @@ description: 智能配图与封面图生成器。支持三种模式：(1) 文章
 /smart-illustrator path/to/script.md --mode slides --prompt-only
 ```
 
-**默认行为**：调用 Qwen API 生成批量信息图。
+**默认行为**：调用 Qwen API **并行生成**批量信息图（默认并发 3，遇限流自动重试）。
 **`--prompt-only`**：输出 JSON prompt 并**自动复制到剪贴板**，可直接粘贴到 Qwen Web 手动生成。
+
+**并行生图**（`batch-generate.ts` 支持的参数）：
+
+```bash
+# 默认并发 3（推荐，适配大多数 DashScope 账号的 QPS）
+/smart-illustrator path/to/script.md --mode slides
+
+# 高 QPS 账号可提升并发，进一步提速
+/smart-illustrator path/to/script.md --mode slides --concurrency 5
+
+# 强制串行（旧模式，每张之间间隔 2s）
+/smart-illustrator path/to/script.md --mode slides --concurrency 1
+```
+
+> ⚠️ 并发上限受 DashScope 主账号 QPS 限制约束。超过会被 429 拒绝，脚本已内置指数退避重试（1s→2s→4s→8s）自动降速。若频繁触发限流，降低 `--concurrency` 值。
 
 **PPT JSON 格式**（`--prompt-only` 时输出）：
 
