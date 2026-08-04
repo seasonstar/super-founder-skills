@@ -44,7 +44,8 @@ python3 /Users/mac/.claude/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-r
    - **业务系统组** → 轨道一（业务系统开发）
    - **数据效能组** → 轨道二（数据智能开发）
 3. **排序**：延期项目优先 → 按计划结束日期升序
-4. **格式化**每条项目一行：`N. **项目名称** — 当前阶段（进度 XX%），计划至 YYYY-MM-DD（延期原因摘要）`
+4. **格式化**每条项目一行：`N. **项目名称** v版本号 — 当前阶段（进度 XX%），计划至 YYYY-MM-DD（延期原因摘要）`
+   - 版本号取自钉钉表格「版本」字段（如 v1.0、v1.1），无版本时省略
    - 无进度数据时省略百分比；无结束日期时写「完成日期待定」
 5. **交叉验证**：结合 Step 2 的云效数据，补充或修正项目状态
 
@@ -76,7 +77,11 @@ cd 05-AI与自动化 && python3 -c "from it_diagram_sync_config import build_syn
 
 ### Step 6：生成排期信息图
 
-询问用户选择图片生成方式：
+默认使用 HTML 渲染（文字精确、进度条准确）：
+
+- **HTML 渲染（推荐）**：`cd 05-AI与自动化 && python3 generate-it-diagram-html.py`
+
+备选（文生图，中文文字可能有误）：
 
 - **Seedream**（豆包）：`cd 05-AI与自动化 && python3 generate-it-diagram-seedream.py`
 - **Qwen**（通义千问）：`cd 05-AI与自动化 && python3 generate-it-diagram-qwen.py`
@@ -96,10 +101,11 @@ cd 05-AI与自动化 && python3 -c "from it_diagram_sync_config import build_syn
 | 技能目录（原始副本） | 项目目录（运行位置） | 用途 |
 |----------------------|---------------------|------|
 | `scripts/it_diagram_sync_config.py` | `05-AI与自动化/it_diagram_sync_config.py` | 配置文件（期数、项目列表、通知模板） |
+| `scripts/generate-it-diagram-html.py` | `05-AI与自动化/generate-it-diagram-html.py` | HTML+Puppeteer 渲染排期图（推荐） |
 | `scripts/generate-it-diagram-seedream.py` | `05-AI与自动化/generate-it-diagram-seedream.py` | 豆包 Seedream 文生图 |
 | `scripts/generate-it-diagram-qwen.py` | `05-AI与自动化/generate-it-diagram-qwen.py` | 通义千问文生图 |
 
-**同步规则**：每次执行技能时，先检查项目目录是否存在这三个脚本，若缺失则从技能目录 `scripts/` 复制过去。
+**同步规则**：每次执行技能时，先检查项目目录是否存在这四个脚本，若缺失则从技能目录 `scripts/` 复制过去。
 
 ## 钉钉表格定位
 
