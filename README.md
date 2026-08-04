@@ -6,6 +6,7 @@ Claude Code 技能集合 - 内容创作与项目管理自动化工具。
 
 | Skill | Description | Trigger |
 |-------|-------------|---------|
+| [content-publish-pipeline](skills/content-publish-pipeline/) | 内容生产到分发全链路编排（写作→配图→公众号→星球→CSDN） | 全链路发布、写完发出去、一键分发 |
 | [wechat-article-writer](skills/wechat-article-writer/) | 微信公众号文章写作辅助 | 公众号写作、微信文章 |
 | [wechat-formatter-publisher](skills/wechat-formatter-publisher/) | Markdown 转微信公众号 HTML 并发布草稿 | 公众号排版、微信文章格式化 |
 | [csdn-article-publish](skills/csdn-article-publish/) | CSDN 博客文章发布（含图片上传） | 发布到CSDN、CSDN草稿箱 |
@@ -35,7 +36,7 @@ Clone 到 `~/.claude/skills/` 下，用 symlink 链接各技能，方便 `git pu
 git clone https://github.com/seasonstar/super-founder-skills.git ~/.claude/skills/super-founder-skills
 
 # 2. 为每个技能创建 symlink
-for skill in wechat-article-writer wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish yunxiao-task-assign yunxiao-weekly-report it-sync ruankao-quiz project-decision-log dingtalk-ai-table dingtalk-docs wukong-knowledge-audit 12306-train-query ctrip-flight-search dianping-info-query professional-patent-agents pm-ruankao-paper-generator; do
+for skill in content-publish-pipeline wechat-article-writer wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish yunxiao-task-assign yunxiao-weekly-report it-sync ruankao-quiz project-decision-log dingtalk-ai-table dingtalk-docs wukong-knowledge-audit 12306-train-query ctrip-flight-search dianping-info-query professional-patent-agents pm-ruankao-paper-generator; do
   ln -sf ~/.claude/skills/super-founder-skills/skills/$skill ~/.claude/skills/$skill
 done
 
@@ -51,6 +52,12 @@ cp -r super-founder-skills/skills/* ~/.claude/skills/
 ```
 
 ## 各技能配置
+
+### content-publish-pipeline
+
+内容生产到分发全链路编排技能，按顺序调用 5 个子技能完成：写作（wechat-article-writer）→ 配图（smart-illustrator）→ 公众号（wechat-formatter-publisher）→ 知识星球（zsxq-publish）→ CSDN（csdn-article-publish）。全自动执行，仅在每个平台的不可逆发布前确认一次。
+
+**无需独立配置**——它的配置依赖上述 5 个子技能全部就绪（见各自配置说明）。配置齐备后，直接说「全链路：XX 主题」即可触发。
 
 ### wechat-formatter-publisher
 
@@ -220,7 +227,7 @@ pip install requests python-docx
 cd ~/.claude/skills/super-founder-skills && git pull
 ```
 
-使用 symlink 方式安装的，`git pull` 即可同步全部 19 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
+使用 symlink 方式安装的，`git pull` 即可同步全部 20 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
 
 ## License
 
