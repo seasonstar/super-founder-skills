@@ -82,9 +82,10 @@ def code_block(content: str, palette: dict, language: str = "") -> str:
     body = highlight_code(content, language) if content.strip() else ""
     return (
         f'<section style="background-color: {palette["code_bg"]}; color: {palette["code_text"]}; '
-        f'padding: 16px 20px; border-radius: 8px; margin: 20px 0; '
+        f'padding: 14px 16px; border-radius: 8px; margin: 20px 0; '
         f"font-family: Menlo, Monaco, Consolas, 'Microsoft YaHei', monospace; "
-        f'font-size: 14px; line-height: 2; letter-spacing: 0; display: block;">'
+        f'font-size: 13px; line-height: 1.6; letter-spacing: 0; '
+        f'text-align: left; overflow-x: auto; display: block;">'
         f"{body}</section>"
     )
 
