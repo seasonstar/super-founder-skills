@@ -54,7 +54,7 @@ bash scripts/post.sh \
 bash scripts/post.sh \
   --token "xxx" \
   --text "内容" \
-  --group "***REMOVED-GROUP-ID***"
+  --group "YOUR_GROUP_ID"
 ```
 
 ## 集成到工作流

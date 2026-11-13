@@ -209,7 +209,7 @@ async function cmdConfigAdd(args) {
     if (!url || !cookie) { console.error('❌ 用法: node zsxq.js config add --url "..." --cookie "..." [--name "名称"]'); process.exit(1); }
 
     const groupId = extractGroupId(url);
-    if (!groupId) { console.error('❌ URL 格式错误，示例：https://wx.zsxq.com/group/***REMOVED-GROUP-ID***'); process.exit(1); }
+    if (!groupId) { console.error('❌ URL 格式错误，示例：https://wx.zsxq.com/group/55555555555555'); process.exit(1); }
 
     let groupName = name;
     if (!groupName) {

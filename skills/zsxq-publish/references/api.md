@@ -31,7 +31,7 @@ Cookie: zsxq_access_token={token}
 **Path Parameters**:
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| group_id | string | 星球ID，如：***REMOVED-GROUP-ID*** |
+| group_id | string | 星球ID，如：YOUR_GROUP_ID |
 
 **Request Body**:
 ```json
@@ -116,7 +116,7 @@ Cookie: zsxq_access_token={token}
 ```json
 {
   "req_data": {
-    "group_id": "***REMOVED-GROUP-ID***",
+    "group_id": "YOUR_GROUP_ID",
     "article_id": "",
     "title": "文章标题",
     "content": "<p>文章内容（HTML格式）</p>",
@@ -159,7 +159,7 @@ Cookie: zsxq_access_token={token}
 ```json
 {
   "req_data": {
-    "group_id": "***REMOVED-GROUP-ID***",
+    "group_id": "YOUR_GROUP_ID",
     "article_id": "",
     "title": "文章标题",
     "content": "<p>文章内容（HTML格式）</p>",
@@ -242,7 +242,7 @@ Cookie: zsxq_access_token={token}
   "succeeded": true,
   "data": {
     "group": {
-      "group_id": ***REMOVED-GROUP-ID***,
+      "group_id": YOUR_GROUP_ID,
       "name": "小傅哥的星球",
       "description": "..."
     }
@@ -264,7 +264,7 @@ Cookie: zsxq_access_token={token}
 ### cURL 示例
 
 ```bash
-curl 'https://api.zsxq.com/v2/groups/***REMOVED-GROUP-ID***/topics' \
+curl 'https://api.zsxq.com/v2/groups/YOUR_GROUP_ID/topics' \
   -H 'content-type: application/json' \
   -H 'x-request-id: c5aba2394-1790-4f97-84c8-ebca01cb272' \
   -H 'x-signature: 9a50178a81cd42977b7688a2a347a1218c5025fe' \
@@ -289,7 +289,7 @@ import requests
 import uuid
 import time
 
-url = "https://api.zsxq.com/v2/groups/***REMOVED-GROUP-ID***/topics"
+url = "https://api.zsxq.com/v2/groups/YOUR_GROUP_ID/topics"
 headers = {
     "content-type": "application/json",
     "x-request-id": str(uuid.uuid4()),

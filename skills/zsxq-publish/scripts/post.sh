@@ -12,8 +12,11 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 默认配置
-GROUP_ID="***REMOVED-GROUP-ID***"
+# 默认配置（群号回退链: --group 参数 > 环境变量 ZSXQ_GROUP_ID > ~/.xfg-zsxq/config）
+GROUP_ID="${ZSXQ_GROUP_ID:-}"
+if [[ -z "$GROUP_ID" && -f "$HOME/.xfg-zsxq/config" ]]; then
+    GROUP_ID=$(grep -E '^ZSXQ_GROUP_ID=' "$HOME/.xfg-zsxq/config" | head -1 | cut -d= -f2)
+fi
 API_URL="https://api.zsxq.com/v2/groups/${GROUP_ID}/topics"
 
 # 参数解析
@@ -39,7 +42,7 @@ show_help() {
 
 可选参数:
     --images        图片路径，多个用逗号分隔
-    --group         星球ID (默认: ***REMOVED-GROUP-ID***)
+    --group         星球ID (默认: 环境变量 ZSXQ_GROUP_ID 或 ~/.xfg-zsxq/config)
     --help          显示帮助
 
 获取签名方法:
@@ -118,6 +121,11 @@ fi
 
 if [[ -z "$TEXT" ]]; then
     echo -e "${RED}错误: 缺少 --text 参数${NC}"
+    exit 1
+fi
+
+if [[ -z "$GROUP_ID" ]]; then
+    echo -e "${RED}错误: 缺少群号（--group 参数、环境变量 ZSXQ_GROUP_ID 或 ~/.xfg-zsxq/config 三选一）${NC}"
     exit 1
 fi
 

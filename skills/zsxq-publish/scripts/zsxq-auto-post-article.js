@@ -21,6 +21,20 @@
 
 const https = require('https');
 const crypto = require('crypto');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+// 群号回退链: --group 参数 > 环境变量 ZSXQ_GROUP_ID > ~/.xfg-zsxq/config
+function resolveGroupId() {
+    if (process.env.ZSXQ_GROUP_ID) return process.env.ZSXQ_GROUP_ID;
+    try {
+        const cfg = fs.readFileSync(path.join(os.homedir(), '.xfg-zsxq', 'config'), 'utf8');
+        const m = cfg.match(/^ZSXQ_GROUP_ID=(.+)$/m);
+        if (m) return m[1].trim();
+    } catch (e) { /* 配置文件不存在时静默跳过 */ }
+    return '';
+}
 
 // 解析命令行参数
 function parseArgs() {
@@ -144,8 +158,12 @@ async function confirmPublish(cookie, groupId, articleId, title, content) {
 
 // 主函数
 async function main() {
-    const { cookie, title, content, group = '***REMOVED-GROUP-ID***', article = '', publish = 'false' } = parseArgs();
+    const { cookie, title, content, group = resolveGroupId(), article = '', publish = 'false' } = parseArgs();
 
+    if (!group) {
+        console.error('❌ 错误: 缺少群号（--group 参数、环境变量 ZSXQ_GROUP_ID 或 ~/.xfg-zsxq/config 三选一）');
+        process.exit(1);
+    }
     if (!cookie) {
         console.error('❌ 错误: 缺少 --cookie 参数');
         process.exit(1);
