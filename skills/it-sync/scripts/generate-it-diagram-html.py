@@ -28,6 +28,10 @@ from it_diagram_sync_config import (
     TRACK2_INTAKE_LINE,
     TRACK2_PROJECTS,
     TRACK2_QUEUE,
+    TRACK3_LABEL,
+    TRACK3_TEAM,
+    TRACK3_INTAKE_LINE,
+    TRACK3_PROJECTS,
     BACKGROUND_ONE_LINE,
     POLICY_ONE_LINE,
     build_sync_notice_text,
@@ -158,6 +162,10 @@ def parse_projects(raw: str) -> list[dict]:
             status = "设计中"
         elif "测试中" in line:
             status = "测试中"
+        elif "需求调研" in line:
+            status = "调研中"
+        elif "需求梳理" in line:
+            status = "梳理中"
         else:
             status = "进行中"
 
@@ -262,6 +270,7 @@ def build_html() -> str:
     """生成完整 HTML 文件内容。"""
     track1_html = render_track(TRACK1_LABEL, TRACK1_TEAM, TRACK1_INTAKE_LINE, TRACK1_PROJECTS, "blue")
     track2_html = render_track(TRACK2_LABEL, TRACK2_TEAM, TRACK2_INTAKE_LINE, TRACK2_PROJECTS, "green")
+    track3_html = render_track(TRACK3_LABEL, TRACK3_TEAM, TRACK3_INTAKE_LINE, TRACK3_PROJECTS, "purple")
 
     queue_text = TRACK2_QUEUE if TRACK2_QUEUE.strip() != "无" else "无"
 
@@ -335,11 +344,11 @@ def build_html() -> str:
     margin-top: 6px;
   }
 
-  /* ---- Main 双栏 ---- */
+  /* ---- Main 三栏 ---- */
   .main {
     flex: 1;
     display: flex;
-    gap: 24px;
+    gap: 20px;
     min-height: 0;
   }
 
@@ -348,7 +357,7 @@ def build_html() -> str:
     min-width: 0;
     background: #fff;
     border-radius: 14px;
-    padding: 24px 22px;
+    padding: 22px 20px;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -364,13 +373,15 @@ def build_html() -> str:
   }
   .track-blue .track-header { border-color: #2D6CDF; }
   .track-green .track-header { border-color: #0EA371; }
+  .track-purple .track-header { border-color: #7C5CE0; }
 
   .track-label {
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 700;
   }
   .track-blue .track-label { color: #2D6CDF; }
   .track-green .track-label { color: #0EA371; }
+  .track-purple .track-label { color: #7C5CE0; }
 
   .team-badge {
     font-size: 24px;
@@ -548,8 +559,8 @@ def build_html() -> str:
     </div>
   </div>
 
-  <!-- 双轨道 -->
-  <div class="main">""" + track1_html + track2_html + """
+  <!-- 三轨道 -->
+  <div class="main">""" + track1_html + track2_html + track3_html + """
   </div>
 
   <!-- Footer -->

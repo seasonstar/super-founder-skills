@@ -40,9 +40,10 @@ python3 /Users/mac/.claude/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-r
 ### Step 3：整理数据
 
 1. **过滤**：仅保留「当前阶段」不是「已完工」的项目
-2. **分组**：按「项目组」分为两组
+2. **分组**：按「项目组」分为三组（对应 2026-06-29 起的三组架构）
    - **业务系统组** → 轨道一（业务系统开发）
    - **数据效能组** → 轨道二（数据智能开发）
+   - **人工智能组** → 轨道三（AI 应用开发）
 3. **排序**：延期项目优先 → 按计划结束日期升序
 4. **格式化**每条项目一行：`N. **项目名称** v版本号 — 当前阶段（进度 XX%），计划至 YYYY-MM-DD（延期原因摘要）`
    - 版本号取自钉钉表格「版本」字段（如 v1.0、v1.1），无版本时省略
@@ -53,9 +54,9 @@ python3 /Users/mac/.claude/skills/yunxiao-weekly-report/scripts/yunxiao-weekly-r
 
 向用户确认（括号内为自动建议值）：
 
-- **期数**：当前 config `SYNC_ISSUE` + 1
-- **双周区间**：上期结束日 +1 ~ +14 天（参考云效 Sprint 实际日期）
-- **下次同步日期**：本期结束日 +3 个工作日
+- **期数**：与云效 Sprint 编号一致，第 N 期 = Sprint N（2026-10-20 用户裁定，要求与云效信息对齐；历史漂移期数不追改）
+- **双周区间**：取当前云效 Sprint 的实际起止日期
+- **下次同步日期**：下期迭代会议日，即下期 Sprint 开始日（不用「结束日 +N 工作日」口径）
 - **各轨承接说明**：默认沿用上期，用户可修改
 
 确认后更新 `05-AI与自动化/it_diagram_sync_config.py`。
@@ -100,8 +101,8 @@ cd 05-AI与自动化 && python3 -c "from it_diagram_sync_config import build_syn
 
 | 技能目录（原始副本） | 项目目录（运行位置） | 用途 |
 |----------------------|---------------------|------|
-| `scripts/it_diagram_sync_config.py` | `05-AI与自动化/it_diagram_sync_config.py` | 配置文件（期数、项目列表、通知模板） |
-| `scripts/generate-it-diagram-html.py` | `05-AI与自动化/generate-it-diagram-html.py` | HTML+Puppeteer 渲染排期图（推荐） |
+| `scripts/it_diagram_sync_config.py` | `05-AI与自动化/it_diagram_sync_config.py` | 配置文件（期数、三轨道项目列表、通知模板） |
+| `scripts/generate-it-diagram-html.py` | `05-AI与自动化/generate-it-diagram-html.py` | HTML+Puppeteer 渲染三轨道排期图（推荐） |
 | `scripts/generate-it-diagram-seedream.py` | `05-AI与自动化/generate-it-diagram-seedream.py` | 豆包 Seedream 文生图 |
 | `scripts/generate-it-diagram-qwen.py` | `05-AI与自动化/generate-it-diagram-qwen.py` | 通义千问文生图 |
 
