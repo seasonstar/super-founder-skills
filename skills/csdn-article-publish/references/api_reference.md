@@ -29,11 +29,12 @@
 | readType | No | public | 可见范围 |
 | type | No | original | 文章类型 |
 | tags | No | - | 标签，逗号分隔，最多5个 |
-| categories | No | - | 分类 |
+| categories | No | 自动 | 分类名，多个用英文逗号分隔。脚本按标题系列自动映射：量化指标解码→量化指标解码，量化策略开发→量化策略开发，以AI量化为生→交易系统开发 |
 | Description | No | - | 摘要，最大256字,发布时需要填写 |
-| creation_statement | No | 0 | 创作声明 0=无声明(默认值), 1=部分内容由AI辅助生成, 2=内容来源网络进行整合创作, 3=个人观点，仅供参考 |
+| creation_statement | No | 3 | 创作声明 0=无声明, 1=部分内容由AI辅助生成, 2=内容来源网络进行整合创作, 3=个人看法，仅供参考（默认值） |
 | status | No | 2 | 状态 2-草稿 0-发布 |
-| cover_type | No | 1 | 封面类型 |
+| cover_images | No | 自动 | 首图封面 URL 数组。脚本默认取正文第一张已转存图片，即 `[第一张图片URL]` |
+| cover_type | No | 1或0 | 封面类型。脚本有封面图时发送 `1`（单图封面），无封面图时发送 `0` |
 | authorized_status | No | false | 授权状态 |
 | source | No | pc_mdeditor | 来源 |
 
@@ -59,6 +60,12 @@
 - `1` - 部分内容由AI辅助生成
 - `2` - 内容来源于网络，进行整合再创作
 - `3` - 个人看法，仅供参考
+
+### cover_type
+- `0` - 不使用首图封面
+- `1` - 单图封面；CSDN 前端在 `cover_images` 有多张时会截取第一张
+
+CSDN 编辑器前端源码显示：`cover_type=0` 时会清空 `cover_images`；`cover_type=1` 且封面数组多于一帧时只保留第一帧。
 
 ## Response
 

@@ -11,6 +11,7 @@ config.local.*
 
 # Real configs with secrets (users create from examples)
 skills/csdn-article-publish/config/csdn_config.json
+skills/csdn-article-publish/config/csdn_image_cache.json
 
 # OS files
 .DS_Store

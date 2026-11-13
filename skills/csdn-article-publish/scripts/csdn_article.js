@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { markdownToHtml } = require('./markdown_to_html');
+const { rehostMarkdownImages, isCsdnHosted } = require('./csdn_images');
 
 const DEFAULT_CONFIG_FILE = 'csdn_config.json';
 const DEFAULT_ARTICLE_MAP_FILE = 'csdn_article_map.json';
@@ -22,6 +23,13 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 3000;
 const MAX_TAG_COUNT = 5;
 const MAX_DESCRIPTION_LENGTH = 256;
+const COVER_MARKDOWN_IMAGE = /!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
+const COVER_HTML_IMAGE = /(<img\b[^>]*\bsrc=["'])([^"']+)(["'][^>]*>)/gi;
+const DEFAULT_CATEGORY_RULES = [
+  { match: '量化指标解码', categories: '量化指标解码' },
+  { match: '量化策略开发', categories: '量化策略开发' },
+  { match: '以AI量化为生', categories: '交易系统开发' }
+];
 const REQUIRED_HEADERS = ['Cookie', 'x-ca-nonce', 'x-ca-signature', 'x-ca-signature-headers', 'x-ca-key'];
 const VALID_READ_TYPES = new Set(['public', 'private', 'read_need_fans', 'read_need_vip']);
 const VALID_ARTICLE_TYPES = new Set(['original', 'repost', 'translated']);
@@ -291,6 +299,87 @@ function stripFrontmatter(raw) {
   return { content: raw.slice(match[0].length), frontmatter };
 }
 
+function firstImageUrl(markdown) {
+  const candidates = [];
+
+  for (const match of String(markdown || '').matchAll(COVER_MARKDOWN_IMAGE)) {
+    candidates.push({ index: match.index, url: match[2] });
+  }
+  for (const match of String(markdown || '').matchAll(COVER_HTML_IMAGE)) {
+    candidates.push({ index: match.index, url: match[2] });
+  }
+
+  candidates.sort((a, b) => a.index - b.index);
+  const url = candidates.length ? String(candidates[0].url || '').trim() : '';
+  return url;
+}
+
+function normalizeCoverImage(value) {
+  if (Array.isArray(value)) {
+    value = value[0];
+  }
+  return value === undefined || value === null ? '' : String(value).trim();
+}
+
+function resolveArticleCover(markdown, extra, defaults) {
+  const configured = normalizeCoverImage(
+    extra.cover_image !== undefined ? extra.cover_image : defaults.cover_image
+  );
+  if (configured) {
+    return { url: configured, source: 'configured' };
+  }
+
+  const autoCover = extra.auto_cover !== undefined
+    ? extra.auto_cover
+    : (defaults.auto_cover !== undefined ? defaults.auto_cover : true);
+  if (autoCover === false) {
+    return { url: '', source: 'disabled' };
+  }
+
+  const url = firstImageUrl(markdown);
+  return { url, source: url ? 'first-image' : 'none' };
+}
+
+function normalizeCategories(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || '').trim()).filter(Boolean).join(',');
+  }
+  return value === undefined || value === null ? '' : String(value).trim();
+}
+
+function inferArticleCategories(title, content, rules) {
+  const titleText = String(title || '');
+  for (const rule of rules) {
+    if (rule && rule.match && titleText.includes(rule.match)) {
+      return normalizeCategories(rule.categories);
+    }
+  }
+
+  // 标题未命中时只看正文开头，避免文末“往期回顾”里的其他系列名干扰。
+  const contentPrefix = String(content || '').slice(0, 2000);
+  for (const rule of rules) {
+    if (rule && rule.match && contentPrefix.includes(rule.match)) {
+      return normalizeCategories(rule.categories);
+    }
+  }
+  return '';
+}
+
+function resolveArticleCategories(title, content, extra, defaults) {
+  const explicit = normalizeCategories(
+    extra.categories !== undefined ? extra.categories : defaults.categories
+  );
+  if (explicit) {
+    return { value: explicit, source: 'configured' };
+  }
+
+  const rules = Array.isArray(defaults.category_rules)
+    ? defaults.category_rules
+    : DEFAULT_CATEGORY_RULES;
+  const value = inferArticleCategories(title, content, rules);
+  return { value, source: value ? 'series-rule' : 'none' };
+}
+
 function resolveContentAndTitle(args) {
   let content = args.content;
   let title = args.title ? String(args.title).trim() : '';
@@ -490,19 +579,19 @@ function buildPayload(args, config) {
     level: 0,
     tags: extra.tags || args.autoTags || defaults.tags || '',
     status: isPublish ? 0 : 2,
-    categories: extra.categories || defaults.categories || '',
+    categories: args.categories || extra.categories || defaults.categories || '',
     type: extra.type || defaults.type || 'original',
     original_link: '',
     authorized_status: false,
     not_auto_saved: '1',
     source: 'pc_mdeditor',
-    cover_images: [],
-    cover_type: 1,
+    cover_images: args.coverImage ? [args.coverImage] : [],
+    cover_type: args.coverImage ? 1 : 0,
     is_new: 1,
     vote_id: 0,
     resource_id: '',
     pubStatus: extra.pubStatus || defaults.pubStatus || 'draft',
-    creation_statement: extra.creation_statement !== undefined ? extra.creation_statement : (defaults.creation_statement !== undefined ? defaults.creation_statement : 0),
+    creation_statement: extra.creation_statement !== undefined ? extra.creation_statement : (defaults.creation_statement !== undefined ? defaults.creation_statement : 3),
     creator_activity_id: ''
   };
   
@@ -634,6 +723,49 @@ async function main() {
   }
 
   const resolvedInput = resolveContentAndTitle(options);
+  const imageBaseDir = resolvedInput.resolvedFilePath
+    ? path.dirname(resolvedInput.resolvedFilePath)
+    : process.cwd();
+
+  try {
+    const rehosted = await rehostMarkdownImages(resolvedInput.content, {
+      baseDir: imageBaseDir,
+      cookie: (config.headers || {}).Cookie,
+      onProgress: (message) => log.step(message)
+    });
+    resolvedInput.content = rehosted.markdown;
+    if (rehosted.uploaded > 0) {
+      log.step(`Uploaded ${rehosted.uploaded} image(s) to CSDN`);
+    }
+    if (rehosted.reused > 0) {
+      log.step(`Reused ${rehosted.reused} cached CSDN image(s)`);
+    }
+    if (rehosted.skipped > 0) {
+      log.step(`Kept ${rehosted.skipped} image(s) already hosted on CSDN`);
+    }
+  } catch (error) {
+    log.error(`图片上传到 CSDN 图床失败，已停止发布: ${error.message}`);
+    process.exit(1);
+  }
+
+  const cover = resolveArticleCover(resolvedInput.content, extra, config.defaults || {});
+  if (cover.url) {
+    log.step(`Article cover (${cover.source}): ${cover.url}`);
+    if (!isCsdnHosted(cover.url)) {
+      log.warn('Article cover is not hosted on csdnimg.cn; CSDN may ignore or reject it');
+    }
+  } else {
+    log.step('Article cover: none');
+  }
+
+  const categories = resolveArticleCategories(
+    resolvedInput.title,
+    resolvedInput.content,
+    extra,
+    config.defaults || {}
+  );
+  log.step(`Article categories (${categories.source}): ${categories.value || 'none'}`);
+
   const articleRecord = findArticleIdByFile(articleMap, resolvedInput.resolvedFilePath);
 
   if (!options.id && articleRecord && (command === 'update' || command === 'publish')) {
@@ -647,6 +779,8 @@ async function main() {
     title: resolvedInput.title,
     content: resolvedInput.content,
     autoTags: resolvedInput.tags,
+    coverImage: cover.url,
+    categories: categories.value,
     extra
   };
   

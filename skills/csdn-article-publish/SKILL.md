@@ -9,6 +9,8 @@ description: csdn blog article publish skills,CSDN博客文章生成与发布技
 
 - 支持读取指定路径的 Markdown 文件，保存为 CSDN 草稿
 - 自动从文章内容中提取标签（解析"相关标签"字段）
+- 图片转存后自动把正文第一张图片设置为文章首图封面
+- 按文章系列自动匹配 CSDN 分类：`量化指标解码` → `量化指标解码`，`量化策略开发` → `量化策略开发`，`以AI量化为生` → `交易系统开发`
 - 支持本地前置校验，在请求发送前检查配置缺项、标签数量等问题
 - 自动维护本地文章映射文件 `csdn_article_map.json`，记录 `file -> articleId -> url`
 - 根据文章 ID 或已保存过的 Markdown 文件更新/发布文章
@@ -27,13 +29,13 @@ description: csdn blog article publish skills,CSDN博客文章生成与发布技
 收到上述请求后：
 1. 读取用户提供的 Markdown 文件路径
 2. 解析文件内容，提取标题和标签（从"相关标签"字段中提取）
-3. **上传本地图片到无铭图床(wmimg.com)，替换文章中的本地图片链接为 wmimg 直链**
-4. 验证所有图片链接已替换完成（无本地路径残留）
-5. 调用 `csdn_article.js` 执行保存/更新/发布
+3. 调用 `csdn_article.js` 执行保存/更新/发布。脚本会在请求前把本地图片和外链图片上传到 CSDN 图床，并把正文里的地址替换为 `*.csdnimg.cn`
+4. 已在 CSDN 图床上的图片会跳过。上传失败时直接停止，不会把会丢图的外链发出去
 
 ## ⚠️ 重要注意事项
 
-- **图片链接替换**：上传本地图片后**必须**替换 Markdown 中的链接为 wmimg 直链，再保存/发布。未替换的本地路径在 CSDN 上无法显示。
+- **图片**：不要再手工传到无铭图床。`save` / `publish` 会把 Markdown 里的本地路径和外链下载后上传到 CSDN 图床，再用 `i-blog.csdnimg.cn` 地址发布。无铭图床、GitHub 等外链会被 CSDN 转存失败后删掉。
+- **首图封面**：图片转存完成后，脚本默认把正文中第一张图片写入 `cover_images`，并将 `cover_type` 设为 `1`（单图封面）。如需关闭，传 `"auto_cover": false`；如需指定其他图片，传 `"cover_image": "https://..."`。
 - **防限流**：CSDN 有接口限流机制，请勿频繁调用 API
 - **建议操作**：
   - 单次保存/更新操作间隔至少 5-10 秒
@@ -87,63 +89,21 @@ def parse_article(filepath):
     return title, ','.join(tags), content
 ```
 
-### 步骤 3：上传本地图片并替换链接
+### 步骤 3：图片由发布脚本自动转存
 
-**⚠️ 关键步骤：上传所有图片（本地和外链）到 wmimg 图床，替换链接后再发布。**
+`csdn_article.js` 在保存或发布前会扫描 `![说明](路径)` 和 `<img src="...">`：
 
-**所有图片都需要重新上传**：本地图片直接上传，外链图片下载后转存到 wmimg。
+- 本地路径按 Markdown 文件所在目录解析，直接上传
+- `http` 外链先下载，再上传
+- 域名已经是 `csdnimg.cn` 或 `csdn.net` 的地址保持不变
+- 同一张图片按内容哈希缓存在 `config/csdn_image_cache.json`，重复发布不会再次上传
+- 转存完成后，正文第一张图片会自动成为文章首图封面；接口发送 `cover_images: [第一张图片URL]` 与 `cover_type: 1`
 
-#### 3.1 逐张上传图片
-
-识别文章中所有 `![alt](路径)` 格式的图片，逐张上传：
-
-```bash
-# 上传单张图片（Token 从 csdn_config.json 自动读取）
-python3 ~/.claude/skills/csdn-article-publish/scripts/wmimg_uploader.py <图片绝对路径>
-```
-
-**注意**：图片路径必须相对于文章所在目录解析。例如文章在 `articles/` 目录下，图片 `xxx.png` 的绝对路径为 `articles/xxx.png`。
-
-每张图片上传成功后，记录返回的 `url`（格式：`https://wmimg.com/xxx/xxx.png`）。
-
-#### 3.2 替换文章中的本地图片链接
-
-**必须完成这一步才能发布！** 将文章中每张图片的路径替换为上传后返回的 wmimg 直链：
-
-```
-替换前: ![说明](本地图片名.png)
-替换后: ![说明](https://wmimg.com/xxx/图片名.png)
-
-替换前: ![说明](https://other-site.com/xxx/图片名.png)
-替换后: ![说明](https://wmimg.com/xxx/图片名.png)
-```
-
-使用 Edit 工具逐张替换，确保所有 `![alt](非http开头)` 的图片链接都已替换为 wmimg URL。
-
-#### 3.3 验证替换结果
-
-替换完成后，用 Grep 工具检查文章中是否还有未替换的本地图片：
-
-```
-grep pattern: !\[.*\]\((?!https?://)
-```
-
-确认所有图片链接都以 `https://` 开头后，再进入下一步发布流程。
-
-**单独上传一张图片**：
-```bash
-# 基本用法（Token 从 csdn_config.json 自动读取）
-python3 ~/.claude/skills/csdn-article-publish/scripts/wmimg_uploader.py <图片路径>
-
-# 指定 Token
-python3 ~/.claude/skills/csdn-article-publish/scripts/wmimg_uploader.py <图片路径> <WMIMG_TOKEN>
-```
-
-**wmimg Token 获取**：从 `csdn_config.json` 的 `wmimg.token` 字段读取，或使用环境变量 `$WMIMG_TOKEN`。
+不需要改 Markdown 源文件，也不要再把图片换成 wmimg 链接。上传失败时命令会退出，文章不会发出去。
 
 ### 步骤 4：保存草稿
 
-**确保步骤3的图片链接替换已完成**，然后调用 `save` 命令：
+调用 `save` 命令。图片会在这一步自动转存到 CSDN 图床：
 
 ```bash
 node ~/.claude/skills/csdn-article-publish/scripts/csdn_article.js save \
@@ -159,9 +119,7 @@ node ~/.claude/skills/csdn-article-publish/scripts/csdn_article.js save \
 
 ### 步骤 6：发布（如需发布）
 
-**再次确认：文章中所有图片链接必须是可访问的 URL（https://开头），无本地路径残留。**
-
-调用 `publish` 命令，使用 `--extra` 传递标签：
+调用 `publish` 命令，使用 `--extra` 传递标签。图片同样会在发布前自动转存：
 
 ```bash
 node ~/.claude/skills/csdn-article-publish/scripts/csdn_article.js publish \
@@ -177,8 +135,11 @@ node ~/.claude/skills/csdn-article-publish/scripts/csdn_article.js publish \
 | tags | 标签（逗号分隔，最多5个） | 从文章"相关标签"提取 |
 | readType | 可见范围 | public(默认值), private, read_need_fans, read_need_vip |
 | type | 文章类型 | original(默认值), repost, translated |
-| creation_statement | 创作声明 | 0=无声明(默认值), 1=部分内容由AI辅助生成, 2=内容来源网络进行整合创作, 3=个人观点，仅供参考 |
+| creation_statement | 创作声明 | 0=无声明, 1=部分内容由AI辅助生成, 2=内容来源网络进行整合创作, 3=个人看法，仅供参考（默认值） |
 | description | 文章摘要（最大256字） | - |
+| categories | 手动指定分类；未指定时按标题系列自动匹配 | 默认映射见上方说明 |
+| auto_cover | 是否自动使用正文第一张图片作为首图封面 | `true`（默认值）/`false` |
+| cover_image | 手动指定首图封面 URL；设置后优先于自动首图 | CSDN 图床 URL 最稳妥 |
 
 ## 本地前置校验
 

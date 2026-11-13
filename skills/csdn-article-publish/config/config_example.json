@@ -10,10 +10,25 @@
     "readType": "public",
     "type": "original",
     "pubStatus": "draft",
-    "creation_statement": 0,
+    "creation_statement": 3,
     "tags": "",
     "categories": "",
-    "description": ""
+    "description": "",
+    "auto_cover": true,
+    "cover_image": "",
+    "category_rules": [
+      {
+        "match": "量化指标解码",
+        "categories": "量化指标解码"
+      },
+      {
+        "match": "量化策略开发",
+        "categories": "量化策略开发"
+      },
+      {
+        "match": "以AI量化为生",
+        "categories": "交易系统开发"
+      }
+    ]
   }
 }
-
