@@ -17,8 +17,11 @@ Claude Code 技能集合 - 内容创作与项目管理自动化工具。
 | [it-sync](skills/it-sync/) | IT双周汇报与排期同步（钉钉数据 + 信息图生成） | IT同步、排期图、双周排期 |
 | [ruankao-quiz](skills/ruankao-quiz/) | 软考案例分析速记练习（AI智能评分） | 软考练习、ruankao、quiz |
 | [project-decision-log](skills/project-decision-log/) | 会议录音笔记提炼，生成项目决议日志（changelog 式） | 总结会议、会议决议、提炼会议、会议纪要 |
-| [dingtalk-ai-table](skills/dingtalk-ai-table/) | 钉钉 AI 表格（多维表）操作 | 钉钉表格、AI表格、多维表 |
-| [dingtalk-docs](skills/dingtalk-docs/) | 钉钉云文档管理（文档/表格/脑图/文件夹） | 钉钉文档、云文档、创建文档 |
+| [web-clipper](skills/web-clipper/) | 网页文章批量剪藏为 Markdown（defuddle/Jina/Metaso 多路兜底） | 剪藏文章、收藏网页、clip |
+| [wechat-article-search](skills/wechat-article-search/) | 微信公众号文章搜索采集 | 公众号搜索、竞品文章 |
+| [wxmp-article-harvester](skills/wxmp-article-harvester/) | 公众号后台文章收割（首次需扫码登录） | 公众号收割、拉取历史文章 |
+| [zsxq](skills/zsxq/) | 知识星球帖子读取与内容管理（cookie 配置见 SKILL.md） | 读星球、星球帖子 |
+| [human-writing](skills/human-writing/) | 中文长文「活人感」写作规范与检查脚本 | 写长文、去 AI 味、活人感 |
 | [wukong-knowledge-audit](skills/wukong-knowledge-audit/) | 钉钉知识库系统性诊断审计 | 审计知识库、知识库体检、文档索引 |
 | [12306-train-query](skills/12306-train-query/) | 12306 火车票班次查询 | 查火车票、12306、车次 |
 | [ctrip-flight-search](skills/ctrip-flight-search/) | 携程航班查询（单程/往返） | 查机票、携程航班、航班查询 |
@@ -36,7 +39,7 @@ Clone 到 `~/.claude/skills/` 下，用 symlink 链接各技能，方便 `git pu
 git clone https://github.com/seasonstar/super-founder-skills.git ~/.claude/skills/super-founder-skills
 
 # 2. 为每个技能创建 symlink
-for skill in content-publish-pipeline wechat-article-writer wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish yunxiao-task-assign yunxiao-weekly-report it-sync ruankao-quiz project-decision-log dingtalk-ai-table dingtalk-docs wukong-knowledge-audit 12306-train-query ctrip-flight-search dianping-info-query professional-patent-agents pm-ruankao-paper-generator; do
+for skill in content-publish-pipeline wechat-article-writer wechat-formatter-publisher csdn-article-publish smart-illustrator zsxq-publish web-clipper wechat-article-search wxmp-article-harvester zsxq human-writing yunxiao-task-assign yunxiao-weekly-report it-sync ruankao-quiz project-decision-log wukong-knowledge-audit 12306-train-query ctrip-flight-search dianping-info-query professional-patent-agents pm-ruankao-paper-generator; do
   ln -sf ~/.claude/skills/super-founder-skills/skills/$skill ~/.claude/skills/$skill
 done
 
@@ -67,12 +70,13 @@ Markdown 转微信公众号兼容 HTML，通过 API 发布草稿。支持 Claude
 # 1. 安装 Python 依赖
 pip install markdown beautifulsoup4 requests
 
-# 2. 配置公众号 API 凭证
+# 2. 配置公众号 API 凭证（二选一，密钥不入仓库）
+# 方式A：本地配置文件（推荐）
 cd ~/.claude/skills/wechat-formatter-publisher
-cp config.example.py config.py
-# 编辑 config.py，填入：
-#   APPID = "你的公众号AppID"
-#   APPSECRET = "你的公众号AppSecret"
+cp config.example.py config.local.py
+# 编辑 config.local.py，填入 WECHAT_APPID / WECHAT_APPSECRET（该文件已被 .gitignore 排除）
+# 方式B：环境变量
+export WECHAT_APPID="你的AppID" WECHAT_APPSECRET="你的AppSecret"
 ```
 
 ### csdn-article-publish
@@ -132,6 +136,7 @@ node zsxq.js config add --url "https://wx.zsxq.com/group/你的GROUP_ID" --cooki
 
 # Cookie 从浏览器 DevTools > Application > Cookies > zsxq_access_token 获取
 # Cookie 会过期，API 返回 1004/1059 错误时需重新配置
+# 群号回退链：--group 参数 > 环境变量 ZSXQ_GROUP_ID > ~/.xfg-zsxq/config
 ```
 
 ### yunxiao-task-assign & yunxiao-weekly-report
@@ -188,9 +193,9 @@ export DASHSCOPE_API_KEY="阿里云 DashScope API Key" # Qwen 文生图
 - 进度文件 `references/.quiz-progress.json` 自动创建和维护
 - 无需额外配置
 
-### dingtalk-ai-table & dingtalk-docs
+### 钉钉 MCP（AI 表格 + 云文档）
 
-钉钉 AI 表格 + 云文档操作，通过 mcporter 连接钉钉官方 MCP server。
+钉钉多维表与云文档能力通过 mcporter 连接钉钉官方 MCP server 使用（与技能目录无关，技能副本已从本仓库移除）。
 
 ```bash
 # 1. 安装 mcporter
@@ -208,6 +213,19 @@ mcporter config add dingtalk-docs --type streamable-http --url "<你的MCP URL>"
 ### 12306-train-query / ctrip-flight-search / dianping-info-query
 
 出行与本地生活查询类技能，基于浏览器自动化操作，无需额外配置。
+
+### web-clipper / wechat-article-search / wxmp-article-harvester / zsxq / human-writing
+
+自媒体素材与写作线技能：网页剪藏（web-clipper，可选 `METASO_API_KEY` 启用 Metaso 兜底）、公众号搜索采集（wechat-article-search，需 `npm install`）、公众号后台收割（wxmp-article-harvester，首次运行需扫码登录）、星球读取（zsxq，cookie 配置见各自 SKILL.md）、中文活人感写作规范（human-writing，开箱即用）。
+
+## 外部技能登记（不入库）
+
+以下技能为第三方上游活跃项目，保持独立 clone + 软链使用，不收进本仓库（收编会锁死上游更新）：
+
+| 技能 | 上游 | 实体位置 | 更新方式 |
+|------|------|----------|----------|
+| last30days | mvanhorn/last30days-skill | `~/.agents/repos/last30days-skill` | 进目录 `git pull` |
+| guizang-social-card-skill | op7418/guizang-social-card-skill | `~/.agents/skills/guizang-social-card-skill` | `git pull`（remote 为上游） |
 
 ### professional-patent-agents
 
@@ -227,7 +245,7 @@ pip install requests python-docx
 cd ~/.claude/skills/super-founder-skills && git pull
 ```
 
-使用 symlink 方式安装的，`git pull` 即可同步全部 20 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
+使用 symlink 方式安装的，`git pull` 即可同步全部 22 个技能。直接复制方式安装的需重新执行 `cp -r` 覆盖。
 
 ## License
 
