@@ -167,7 +167,7 @@ npx -y bun ~/.claude/skills/smart-illustrator/scripts/generate-image.ts \
 | `-p, --prompt` | 图片描述文本 |
 | `-f, --prompt-file` | 从文件读取 prompt |
 | `-o, --output` | 输出路径（默认：generated.png） |
-| `-m, --model` | 模型（默认：qwen-image-2.0-pro） |
+| `-m, --model` | 模型（默认：qwen-image-3.0-pro） |
 | `-r, --ref` | 参考图路径（可多次使用，最多 3 张） |
 | `--ref-weight` | 参考图权重（0.0-1.0，暂未实现） |
 | `-c, --candidates` | 生成候选图数量（最多 4 张） |
@@ -189,7 +189,7 @@ npx -y bun ~/.claude/skills/smart-illustrator/scripts/batch-generate.ts \
 |------|------|
 | `-c, --config` | JSON 配置文件（必需） |
 | `-o, --output-dir` | 输出目录（默认：./illustrations） |
-| `-m, --model` | 模型（默认：qwen-image-2.0-pro） |
+| `-m, --model` | 模型（默认：qwen-image-3.0-pro） |
 | `-d, --delay` | 请求间隔毫秒数（默认：2000） |
 | `-p, --prefix` | 文件名前缀（默认：从配置文件名提取） |
 | `-r, --regenerate` | 重新生成指定图片（如 "3" 或 "3,5,7"） |
@@ -724,8 +724,8 @@ mmdc -i input.mmd -o output.png -s 3 -w 1600 -b white
 
 | 参数 | 值 | 说明 |
 |------|-----|------|
-| 模型 | `qwen-image-2.0-pro` | 最适合配图 |
-| 分辨率 | 2K (2816×1536) | 通过 `imageConfig.imageSize` 设置高分辨率 |
+| 模型 | `qwen-image-3.0-pro` | 最适合配图 |
+| 分辨率 | 默认约 1K；`--size 2k` 输出 2K | 具体像素随宽高比变化 |
 | 正文配图比例 | 3:4 竖版 | 适合嵌入文章 |
 | 封面图比例 | 16:9 横版 | 平台就绪格式 |
 | 封面图文字 | **无** | 纯视觉，标题由平台显示 |
@@ -750,11 +750,11 @@ mmdc -i input.mmd -o output.png -s 3 -w 1600 -b white
 
 ## 成本
 
-使用 Qwen API 自动生成时：
+使用 Qwen API 自动生成时（华北 2 原价）：
 
-| 模型 | 价格 | 质量 |
+| 模型 | 价格 | 计费方式 |
 |------|------|------|
-| `qwen-image-2.0-pro` | $0.134/张 ≈ ¥1/张 | 2K（默认） |
+| `qwen-image-3.0-pro` | ¥0.25/张（1K）；¥0.50/张（2K） | 按输出分辨率计费 |
 
 获取 API Key：https://dashscope.console.aliyun.com/apiKey
 

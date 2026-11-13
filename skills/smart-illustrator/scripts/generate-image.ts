@@ -3,7 +3,7 @@
  * Image Generation Script (Qwen / 千问文生图)
  *
  * Supports:
- * - Qwen Image 2.0 Pro (default, for users in China)
+ * - Qwen Image 3.0 Pro (default, for users in China)
  *
  * Generate images using Qwen text-to-image API
  */
@@ -49,7 +49,7 @@ interface QwenResponse {
 }
 
 // Default models
-const DEFAULT_QWEN_MODEL = 'qwen-image-2.0-pro';
+const DEFAULT_QWEN_MODEL = 'qwen-image-3.0-pro';
 
 // Supported aspect ratios for Qwen
 type AspectRatio = '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9' | '2.35:1';
@@ -192,7 +192,7 @@ Options:
   -p, --prompt <text>       Image description
   -f, --prompt-file <path>  Read prompt from file
   -o, --output <path>       Output image path (default: generated.png)
-  -m, --model <model>       Model to use (default: qwen-image-2.0-pro)
+  -m, --model <model>       Model to use (default: qwen-image-3.0-pro)
   --size <size>             Image size: 2k (2048px, default) or default (~1.4K)
   -a, --aspect-ratio <ratio>  Aspect ratio: 1:1, 3:4, 4:3, 9:16, 16:9, 21:9, etc.
   -h, --help                Show this help

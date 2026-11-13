@@ -27,7 +27,7 @@ import { join, dirname, basename } from 'node:path';
 
 // Qwen API endpoint for image generation
 const QWEN_API_BASE = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
-const DEFAULT_MODEL = 'qwen-image-2.0-pro';
+const DEFAULT_MODEL = 'qwen-image-3.0-pro';
 
 // New unified format (same as web version)
 interface PictureConfig {
@@ -317,7 +317,7 @@ Usage:
 Options:
   -c, --config <path>       JSON config file (unified format, same as web version)
   -o, --output-dir <path>   Output directory (default: ./illustrations)
-  -m, --model <model>       Model to use (default: qwen-image-2.0-pro)
+  -m, --model <model>       Model to use (default: qwen-image-3.0-pro)
   -s, --size <size>         Image size: 2k (2048px) or default (~1K, default)
   -d, --delay <ms>          Delay between requests in ms (serial mode only, default: 2000)
   -p, --prefix <text>       Filename prefix (default: from config filename)

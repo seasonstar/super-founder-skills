@@ -322,6 +322,7 @@ EOF
 DASHSCOPE_API_KEY=$DASHSCOPE_API_KEY npx -y bun ~/.claude/skills/smart-illustrator/scripts/generate-image.ts \
   --prompt-file /tmp/cover-prompt.txt \
   --output {文章名}-cover.png \
+  --size 2k \
   --aspect-ratio {从平台配置表查得的 aspect_ratio}
 ```
 

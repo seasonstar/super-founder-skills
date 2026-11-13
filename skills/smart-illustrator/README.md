@@ -164,7 +164,7 @@ npx -y bun ~/.claude/skills/smart-illustrator/scripts/generate-image.ts \
 | `-p, --prompt` | Image description text |
 | `-f, --prompt-file` | Read prompt from file |
 | `-o, --output` | Output path (default: generated.png) |
-| `-m, --model` | Model (default: qwen-image-2.0-pro) |
+| `-m, --model` | Model (default: qwen-image-3.0-pro) |
 
 #### batch-generate.ts (Batch Generation)
 
@@ -181,7 +181,7 @@ npx -y bun ~/.claude/skills/smart-illustrator/scripts/batch-generate.ts \
 |--------|-------------|
 | `-c, --config` | JSON config file (required) |
 | `-o, --output-dir` | Output directory (default: ./illustrations) |
-| `-m, --model` | Model (default: qwen-image-2.0-pro) |
+| `-m, --model` | Model (default: qwen-image-3.0-pro) |
 | `-d, --delay` | Delay between requests in ms (default: 2000) |
 | `-p, --prefix` | Filename prefix (default: from config filename) |
 | `-r, --regenerate` | Regenerate specific images (e.g., "3" or "3,5,7") |
@@ -627,8 +627,8 @@ This skill follows the style guidelines from [mermaid-visualizer](https://github
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| Model | `qwen-image-2.0-pro` | Best for illustrations |
-| Resolution | 2K (2816×1536) | High-res output via `imageConfig.imageSize` |
+| Model | `qwen-image-3.0-pro` | Best for illustrations |
+| Resolution | Approximately 1K by default; 2K with `--size 2k` | Exact dimensions vary by aspect ratio |
 | Content Aspect | 3:4 portrait | Optimized for article embedding |
 | Cover Aspect | 16:9 landscape | Platform-ready cover format |
 | Cover Text | **None** | Clean visual, title shown by platform |
@@ -654,11 +654,11 @@ This skill follows the style guidelines from [mermaid-visualizer](https://github
 
 ## Cost
 
-When using Qwen API for auto-generation:
+When using Qwen API for auto-generation (Beijing list price):
 
-| Model | Price | Quality |
+| Model | Price | Billing |
 |-------|-------|---------|
-| `qwen-image-2.0-pro` | $0.134/image ≈ ¥1/image | 2K (default) |
+| `qwen-image-3.0-pro` | ¥0.25/image (1K); ¥0.50/image (2K) | Based on output resolution |
 
 Get API Key: https://dashscope.console.aliyun.com/apiKey
 
