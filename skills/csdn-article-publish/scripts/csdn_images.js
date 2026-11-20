@@ -15,7 +15,9 @@ const CA_KEY = '203803574';
 const CA_SECRET = '9znpamsyl2c7cdrr9sas0le9vbc3r6ba';
 const CACHE_FILE = path.join(__dirname, '../config/csdn_image_cache.json');
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const MARKDOWN_IMAGE = /!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
+// URL 组允许空格（支持 "Pasted image xxx.png" 这类带空格本地文件名）；
+// 惰性匹配 + 可选标题，collectSources 内再做 <> 包裹与标题残留的清洗
+const MARKDOWN_IMAGE = /!\[([^\]]*)\]\(\s*<?([^)]*?)>?\s*(?:"[^"]*")?\s*\)/g;
 const HTML_IMAGE = /(<img\b[^>]*\bsrc=["'])([^"']+)(["'][^>]*>)/gi;
 
 const MIME_BY_SUFFIX = {
@@ -72,7 +74,15 @@ function collectSources(markdown) {
   const seen = new Set();
 
   function add(src) {
-    const value = String(src || '').trim();
+    let value = String(src || '').trim();
+    // 清洗 <> 包裹与残留的 "标题" 片段，得到纯路径/URL
+    if (value.startsWith('<') && value.endsWith('>')) {
+      value = value.slice(1, -1);
+    }
+    const quote = value.indexOf('"');
+    if (quote !== -1) {
+      value = value.slice(0, quote).trim();
+    }
     if (!value || value.startsWith('data:') || seen.has(value)) {
       return;
     }
@@ -257,6 +267,22 @@ async function uploadBytes(bytes, filename, cookie) {
  * @param {{ baseDir?: string, cookie: string, onProgress?: (message: string) => void }} options
  * @returns {Promise<{ markdown: string, uploaded: number, reused: number, skipped: number }>}
  */
+// 发布前兜底：正文里不允许残留未转存的图片引用。
+// 2026-11-18 实测带空格文件名的本地图片曾被静默跳过、死图直接上线，此校验强制拦截。
+function assertFullyRehosted(markdown) {
+  if (/!\[\[/.test(markdown)) {
+    throw new Error(
+      '发现 Obsidian 嵌图语法 ![[...]]，CSDN 无法识别：请先转为 ![...](path) 标准语法再发布'
+    );
+  }
+  const leftovers = collectSources(markdown).filter((src) => !isCsdnHosted(src));
+  if (leftovers.length > 0) {
+    throw new Error(
+      `以下图片引用未被转存到 CSDN 图床，已停止发布（防止死图上线）：\n  - ${leftovers.join('\n  - ')}`
+    );
+  }
+}
+
 async function rehostMarkdownImages(markdown, options) {
   const baseDir = options.baseDir || process.cwd();
   const onProgress = options.onProgress || (() => {});
@@ -265,6 +291,7 @@ async function rehostMarkdownImages(markdown, options) {
   const skipped = sources.length - pending.length;
 
   if (pending.length === 0) {
+    assertFullyRehosted(markdown);
     return { markdown, uploaded: 0, reused: 0, skipped };
   }
   if (!options.cookie) {
@@ -298,6 +325,7 @@ async function rehostMarkdownImages(markdown, options) {
   for (const [from, to] of replacements) {
     next = next.split(from).join(to);
   }
+  assertFullyRehosted(next);
   return { markdown: next, uploaded, reused, skipped };
 }
 

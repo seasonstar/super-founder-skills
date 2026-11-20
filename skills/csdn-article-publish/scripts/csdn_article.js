@@ -23,7 +23,7 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 3000;
 const MAX_TAG_COUNT = 5;
 const MAX_DESCRIPTION_LENGTH = 256;
-const COVER_MARKDOWN_IMAGE = /!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
+const COVER_MARKDOWN_IMAGE = /!\[([^\]]*)\]\(\s*<?([^)]*?)>?\s*(?:"[^"]*")?\s*\)/g;
 const COVER_HTML_IMAGE = /(<img\b[^>]*\bsrc=["'])([^"']+)(["'][^>]*>)/gi;
 const DEFAULT_CATEGORY_RULES = [
   { match: '量化指标解码', categories: '量化指标解码' },
