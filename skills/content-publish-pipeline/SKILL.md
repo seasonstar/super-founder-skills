@@ -22,8 +22,13 @@ description: 内容生产到分发全链路编排技能。从选题/写作→配
 | ① 写作 | `wechat-article-writer` | 按《以AI量化为生》等系列规范写 Markdown |
 | ② 配图 | `smart-illustrator` | 生成封面 + 正文配图，插入文章 |
 | ③ 公众号 | `wechat-formatter-publisher` | 转 HTML + 创建草稿，转述后台手动确认清单 |
-| ④ 星球 | `zsxq` | `zsxq-cli` 发文章分享帖 / 源码包帖（支持 `--files` 附件），发后核验 |
-| ⑤ CSDN | `csdn-article-publish` | 图片自动转 csdnimg + 保存草稿/直接发布，发后线上核验 |
+| ④ CSDN | `csdn-article-publish` | 图片自动转 csdnimg + 保存草稿/直接发布，发后线上核验（**不依赖公众号链接，可与③并行**） |
+| ⑤ 星球+README | `zsxq` | `zsxq-cli` 发文章分享帖 / 源码包帖（支持 `--files` 附件），发后核验；并补 README 回链 + commit/push（**必须等用户提供真实文章链接**） |
+
+**执行顺序门控（2026-11-20 用户明确）**：
+- 公众号（③）与 CSDN（④）**可以同时发**——CSDN 版内容独立，不需要公众号链接。
+- 星球（⑤）**必须等用户提供真实文章链接**（用户在公众号后台点发布之后拿到的 `https://mp.weixin.qq.com/s/...`）才能发。草稿阶段的任何占位链接都不能发星球。
+- README 回链与 commit/push 也放在⑤：拿到真实链接后，星球帖 + README 一起做。
 
 **核心原则：每个子技能的细节由其自身 SKILL.md 决定，本技能只做编排和跨平台一致性保证。不要重新实现子技能的能力。**
 
@@ -34,11 +39,12 @@ description: 内容生产到分发全链路编排技能。从选题/写作→配
 ## ⛔ 强制规则（违反即失败）
 
 1. **发布前必须确认**：③④⑤ 任何一步真正发布前，都要用 AskUserQuestion 问用户「是否继续」，因为发布不可逆。
-2. **参数预检**：进入分发阶段前，必须先跑 [预检清单](#预检清单)，任一项不通过就停下报告，不要带着问题硬发。
-3. **风格一致性**：同一篇文章三平台的标题、配图、核心内容必须一致，不要各写各的。
-4. **CSDN 失败先重试**：`Failed: undefined`（带 Trace ID）多为偶发，先原样重跑一次；连续两次失败再按签名过期处理（重抓 saveArticle 请求头后立即重跑）。2026-11 实测旧配置通常可直接 save+publish。
-5. **星球发帖风格**：链接在前 + 一两句简短介绍，见 [星球发帖规范](#阶段-知识星球发帖)。
-6. **发布后必须核验**：星球核验附件/图片/链接齐全；CSDN 线上抓正文确认无本地路径死图。核验不过不算完成。
+2. **顺序门控**：公众号与 CSDN 可并行；**星球帖与 README 回链必须等用户提供真实文章链接**（后台实际发布后）才执行，不要拿草稿/占位链接发星球。
+3. **参数预检**：进入分发阶段前，必须先跑 [预检清单](#预检清单)，任一项不通过就停下报告，不要带着问题硬发。
+4. **风格一致性**：同一篇文章三平台的标题、配图、核心内容必须一致，不要各写各的。
+5. **CSDN 失败先重试**：`Failed: undefined`（带 Trace ID）多为偶发，先原样重跑一次；连续两次失败再按签名过期处理（重抓 saveArticle 请求头后立即重跑）。2026-11 实测旧配置通常可直接 save+publish。
+6. **星球发帖风格**：链接在前 + 一两句简短介绍，见 [星球发帖规范](#阶段-星球发帖readme回链)。
+7. **发布后必须核验**：星球核验附件/图片/链接齐全；CSDN 线上抓正文确认无本地路径死图。核验不过不算完成。
 
 ---
 
@@ -95,7 +101,7 @@ ls ~/.agents/skills/csdn-article-publish/config/csdn_config.json
 
 ---
 
-### 阶段 ③：公众号发布
+### 阶段 ③：公众号草稿
 
 调用 `wechat-formatter-publisher` 技能。
 
@@ -118,15 +124,53 @@ python ~/.agents/skills/wechat-formatter-publisher/publisher.py "articles/xxx.ht
 
 **3d. 转述手动确认清单（必须，逐条原样转述）**：原创（文字原创+快捷转载）、合集（按标题匹配，如「量化指标库」）、创作来源（个人观点）、平台推荐（开启）。
 
-**3e. 拿到文章链接后的固定动作**：
-1. 更新 README.md 该系列文章列表（标题+链接+要点）
-2. commit + push 公开仓库（docs: 补充XX文章链接）
+**3e. 等待真实链接**：草稿创建后**没有**正式的 `mp.weixin.qq.com/s/` 链接——用户在后台勾选清单并点发布后才产生。向用户说明：「后台发布后把文章链接发我，我接着发星球并补 README」。此阶段到此暂停，可先去做阶段④（CSDN 不依赖链接）。
 
 ---
 
-### 阶段 ④：知识星球发帖
+### 阶段 ④：CSDN 发布（与公众号并行，不依赖文章链接）
 
-调用 `zsxq` 技能（zsxq-cli 通道）。先 `zsxq-cli group +list` 拿 group_id。**用阶段③的公众号链接。**
+调用 `csdn-article-publish` 技能。公众号草稿创建后即可进行，无需等后台发布。
+
+**4a. 准备 CSDN 专用版**
+```bash
+cp articles/xxx.md articles/xxx-CSDN版.md
+```
+再做三处口径调整：
+- 「会员专享」措辞改为「完整源码包已发布在知识星球」口径
+- Obsidian 嵌图 `![[x.png]]` → `![](x.png)`
+- 带空格的图片文件名改为无空格副本（如 `Pasted image xxx.png` → `xxx-note.png`），并同步引用
+
+**4b. 保存草稿（图片自动转 csdnimg）**
+```bash
+node ~/.agents/skills/csdn-article-publish/scripts/csdn_article.js save \
+  --config ~/.agents/skills/csdn-article-publish/config/csdn_config.json \
+  --title "标题" --file "articles/xxx-CSDN版.md"
+```
+- 脚本自动把本地/外链图片转存到 CSDN 图床并替换链接，正文第一张图自动作首图封面
+- **转存兜底已内置**：残留未转存引用或 Obsidian 嵌图会直接报错停止，不会把死图发出去
+- 首次报 `Failed: undefined` → 原样重跑一次再排查
+
+**4c. 发布（用户确认后）**
+```bash
+node ~/.agents/skills/csdn-article-publish/scripts/csdn_article.js publish \
+  --config ~/.agents/skills/csdn-article-publish/config/csdn_config.json \
+  --id <article_id> --title "标题" --file "articles/xxx-CSDN版.md" \
+  --extra '{"tags":"量化交易,X,X,X,Python","description":"摘要≤256字","creation_statement":3}'
+```
+- tags 最多 5 个（文章尾部标签超过 5 个时择要）
+- **修改已发布文章**：只能再次 `publish` 覆盖；`update` 会报「已发布文章无法保存草稿」
+- 保存/发布间隔 ≥5-10 秒防限流
+
+**4d. 线上核验（必做）**：WebFetch 抓 CSDN 会 521，用 `curl -A "Mozilla/5.0..." <url> | grep csdnimg` 或 web_reader 工具，确认标题/正文/图片全部为 csdnimg 链接、无本地路径残留。
+
+---
+
+### 阶段 ⑤：星球发帖 + README 回链（**门控：用户提供真实文章链接后执行**）
+
+**前置条件**：用户发来真实的 `https://mp.weixin.qq.com/s/...` 链接（后台已发布）。此前禁止发星球、禁止改 README。
+
+调用 `zsxq` 技能（zsxq-cli 通道）。先 `zsxq-cli group +list` 拿 group_id。
 
 #### 帖型 A：文章分享帖（默认）
 
@@ -169,43 +213,10 @@ zsxq-cli group +topics --group-id <group_id>   # 或 topic +detail
 
 ⚠️ **topic_id 陷阱**：发帖响应里的 `topic.topic_id` 与列表/详情接口的 topic_id 可能不一致（同帖相差个位数），核验一律以 `group +topics` / `topic +detail` 返回为准，不要拿发帖响应里的 ID 直接查 `/info`。
 
----
+#### README 回链（星球发完后同一批次做）
 
-### 阶段 ⑤：CSDN 发布
-
-调用 `csdn-article-publish` 技能。
-
-**5a. 准备 CSDN 专用版**
-```bash
-cp articles/xxx.md articles/xxx-CSDN版.md
-```
-再做三处口径调整：
-- 「会员专享」措辞改为「完整源码包已发布在知识星球」口径
-- Obsidian 嵌图 `![[x.png]]` → `![](x.png)`
-- 带空格的图片文件名改为无空格副本（如 `Pasted image xxx.png` → `xxx-note.png`），并同步引用
-
-**5b. 保存草稿（图片自动转 csdnimg）**
-```bash
-node ~/.agents/skills/csdn-article-publish/scripts/csdn_article.js save \
-  --config ~/.agents/skills/csdn-article-publish/config/csdn_config.json \
-  --title "标题" --file "articles/xxx-CSDN版.md"
-```
-- 脚本自动把本地/外链图片转存到 CSDN 图床并替换链接，正文第一张图自动作首图封面
-- **转存兜底已内置**：残留未转存引用或 Obsidian 嵌图会直接报错停止，不会把死图发出去
-- 首次报 `Failed: undefined` → 原样重跑一次再排查
-
-**5c. 发布（用户确认后）**
-```bash
-node ~/.agents/skills/csdn-article-publish/scripts/csdn_article.js publish \
-  --config ~/.agents/skills/csdn-article-publish/config/csdn_config.json \
-  --id <article_id> --title "标题" --file "articles/xxx-CSDN版.md" \
-  --extra '{"tags":"量化交易,X,X,X,Python","description":"摘要≤256字","creation_statement":3}'
-```
-- tags 最多 5 个（文章尾部标签超过 5 个时择要）
-- **修改已发布文章**：只能再次 `publish` 覆盖；`update` 会报「已发布文章无法保存草稿」
-- 保存/发布间隔 ≥5-10 秒防限流
-
-**5d. 线上核验（必做）**：WebFetch 抓 CSDN 会 521，用 `curl -A "Mozilla/5.0..." <url> | grep csdnimg` 或 web_reader 工具，确认标题/正文/图片全部为 csdnimg 链接、无本地路径残留。
+1. 更新 README.md 该系列文章列表（标题+链接+要点）
+2. commit + push 公开仓库（docs: 补充XX文章链接）
 
 #### CSDN 签名问题 ⚠️
 
@@ -219,9 +230,9 @@ node ~/.agents/skills/csdn-article-publish/scripts/csdn_article.js publish \
 ## 全链路检查清单（全部完成后核对）
 
 - [ ] 公众号草稿已创建，手动确认清单已逐条转述给用户
-- [ ] README.md 文章列表已追加并 commit+push
-- [ ] 星球帖子已发（分享帖链接在前 / 源码包帖附件齐全），`group +topics` 核验通过
-- [ ] CSDN 已发布，线上核验无本地路径/死图
+- [ ] CSDN 已发布（与公众号并行），线上核验无本地路径/死图
+- [ ] 用户已提供真实文章链接，星球帖子已发（分享帖链接在前 / 源码包帖附件齐全），`group +topics` 核验通过
+- [ ] README.md 文章列表已追加并 commit+push（与星球同一批次）
 - [ ] articles/ 下文章文件齐全（原版 + CSDN版）+ images 配图齐全（无空格文件名）
 - [ ] 预告的下一篇选题已记录（供下次使用）
 
